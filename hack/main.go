@@ -2,14 +2,10 @@ package main
 
 import (
 	"fmt"
-	"image/png"
 	"io/ioutil"
-	"os"
 	"strings"
 
 	"github.com/Masterminds/semver"
-	"github.com/nfnt/resize"
-	"github.com/oliamb/cutter"
 	"sigs.k8s.io/yaml"
 )
 
@@ -62,58 +58,26 @@ func main() {
 		if len(tags) == 1 && tags[0] == "" {
 			panic("must have at least one tag")
 		}
-		badges := make([]string, len(tags))
-		for i, tag := range tags {
-			badges[i] = `<span class="badge badge-light">` + tag + `</span>`
+		icon := annotations["workflows.argoproj.io/icon"].(string)
+		maintainer := annotations["workflows.argoproj.io/maintainer"].(string)
+		if !strings.Contains(maintainer, "@") {
+			panic("invalid maintainer, must be email address: " + maintainer)
 		}
-		badges = append(badges, `<span class="badge badge-dark">`+version+`</span>`)
 		cards = append(cards, fmt.Sprintf(`<div class="card box-shadow">
-  <img class="card-img-top" src="../templates/%s/icon.png" alt="%s">
+    <div class="card-header d-flex flex-row">
+        <div>
+        	<h1><i class='fa'>%s</i></h1>
+        </div>
+        <div class="media-body">
+            <h3 class="card-title">%s</h3>
+            <p class="card-subtitle text-muted">By %s <span class="badge badge-light">%s</span></p>
+        </div>
+    </div>
   <div class="card-body">
-    <h3 class="card-title">%s</h3>
-    <h6 class="card-subtitle mb-2 text-muted">%s</h6>
     <p class="card-text">%s</p>
-    <a href="%s" class="btn btn-primary">Download</a>
+    <a href="%s" class="btn btn-light">Download</a>
   </div>
-</div>`, name, name, name, strings.Join(badges, ""), description, "https://raw.githubusercontent.com/alexec/argo-workflows-catalog/master/"+filename))
-
-		iconFilename := "templates/" + name + "/icon.png"
-		icon, err := os.Open(iconFilename)
-		if err != nil {
-			panic("failed to open icon:" + err.Error())
-		}
-		img, err := png.Decode(icon)
-		if err != nil {
-			panic("failed to decode icon:" + err.Error())
-		}
-		err = icon.Close()
-		if err != nil {
-			panic("failed to close icon: " + err.Error())
-		}
-		if img.Bounds().Max.X > 320 || img.Bounds().Max.Y > 180 {
-			tall := img.Bounds().Max.Y > img.Bounds().Max.X
-			if tall {
-				img = resize.Resize(320, 0, img, resize.Lanczos3)
-				img, err = cutter.Crop(img, cutter.Config{Width: 320, Height: 180, Mode: cutter.Centered})
-				if err != nil {
-					panic("failed to crop icon: " + err.Error())
-				}
-			} else {
-				panic("TODO")
-			}
-			out, err := os.Create(iconFilename)
-			if err != nil {
-				panic("failed to create icon: " + err.Error())
-			}
-			err = png.Encode(out, img)
-			if err != nil {
-				panic("failed to encode icon: " + err.Error())
-			}
-			err = out.Close()
-			if err != nil {
-				panic("failed to close icon: " + err.Error())
-			}
-		}
+</div>`, icon, name, maintainer, version, description,  "https://raw.githubusercontent.com/alexec/argo-workflows-catalog/master/"+filename))
 
 	}
 
@@ -126,6 +90,7 @@ func main() {
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
 
     <title>%s</title>
   </head>
