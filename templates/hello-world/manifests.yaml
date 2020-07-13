@@ -2,7 +2,8 @@ apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   annotations:
-    workflows.argoproj.io/description: Hello world example.
+    workflows.argoproj.io/description: This is a basic catalog example that simply
+      prints "hello argo!".
     workflows.argoproj.io/tags: example
     workflows.argoproj.io/version: '>= 2.9.0'
   name: hello-world

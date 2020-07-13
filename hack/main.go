@@ -2,13 +2,18 @@ package main
 
 import (
 	"fmt"
+	"image/png"
 	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/Masterminds/semver"
+	"github.com/nfnt/resize"
+	"github.com/oliamb/cutter"
 	"sigs.k8s.io/yaml"
 )
 
+//https://getbootstrap.com/docs/4.0/examples/pricing/
 type obj = map[string]interface{}
 
 func main() {
@@ -61,15 +66,55 @@ func main() {
 		for i, tag := range tags {
 			badges[i] = `<span class="badge badge-light">` + tag + `</span>`
 		}
-		cards = append(cards, fmt.Sprintf(`<div class="card" style="width: 18rem;">
+		badges = append(badges, `<span class="badge badge-dark">`+version+`</span>`)
+		cards = append(cards, fmt.Sprintf(`<div class="card box-shadow">
   <img class="card-img-top" src="../templates/%s/icon.png" alt="%s">
   <div class="card-body">
-    <h5 class="card-title">%s</h5>
+    <h3 class="card-title">%s</h3>
     <h6 class="card-subtitle mb-2 text-muted">%s</h6>
     <p class="card-text">%s</p>
     <a href="%s" class="btn btn-primary">Download</a>
   </div>
 </div>`, name, name, name, strings.Join(badges, ""), description, "https://raw.githubusercontent.com/alexec/argo-workflows-catalog/master/"+filename))
+
+		iconFilename := "templates/" + name + "/icon.png"
+		icon, err := os.Open(iconFilename)
+		if err != nil {
+			panic("failed to open icon:" + err.Error())
+		}
+		img, err := png.Decode(icon)
+		if err != nil {
+			panic("failed to decode icon:" + err.Error())
+		}
+		err = icon.Close()
+		if err != nil {
+			panic("failed to close icon: " + err.Error())
+		}
+		if img.Bounds().Max.X > 320 || img.Bounds().Max.Y > 180 {
+			tall := img.Bounds().Max.Y > img.Bounds().Max.X
+			if tall {
+				img = resize.Resize(320, 0, img, resize.Lanczos3)
+				img, err = cutter.Crop(img, cutter.Config{Width: 320, Height: 180, Mode: cutter.Centered})
+				if err != nil {
+					panic("failed to crop icon: " + err.Error())
+				}
+			} else {
+				panic("TODO")
+			}
+			out, err := os.Create(iconFilename)
+			if err != nil {
+				panic("failed to create icon: " + err.Error())
+			}
+			err = png.Encode(out, img)
+			if err != nil {
+				panic("failed to encode icon: " + err.Error())
+			}
+			err = out.Close()
+			if err != nil {
+				panic("failed to close icon: " + err.Error())
+			}
+		}
+
 	}
 
 	err = ioutil.WriteFile("docs/index.html", []byte(fmt.Sprintf(`<!doctype html>
@@ -85,7 +130,15 @@ func main() {
     <title>%s</title>
   </head>
   <body>
-    %s
+    <div class="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
+      <h1 class="display-4">Template Catalog</h1>
+      <p class="lead">Free reusable templates for Argo Workflows.</p>
+    </div>
+    <div class="container">
+      <div class="card-deck text-center">
+        %s
+      </div>
+    </div>
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
