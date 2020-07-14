@@ -58,26 +58,22 @@ func main() {
 		if len(tags) == 1 && tags[0] == "" {
 			panic("must have at least one tag")
 		}
-		icon := annotations["workflows.argoproj.io/icon"].(string)
 		maintainer := annotations["workflows.argoproj.io/maintainer"].(string)
 		if !strings.Contains(maintainer, "@") {
 			panic("invalid maintainer, must be email address: " + maintainer)
 		}
+		url := "https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/" + filename
 		cards = append(cards, fmt.Sprintf(`<div class="card box-shadow">
-    <div class="card-header d-flex flex-row">
-        <div>
-        	<h1><i class='fa'>%s</i></h1>
-        </div>
+    <div class="card-header">
         <div class="media-body">
-            <h3 class="card-title">%s</h3>
+            <h3 class="card-title"><a href="%s">%s</a></h3>
             <p class="card-subtitle text-muted">By %s <span class="badge badge-light">%s</span></p>
         </div>
     </div>
   <div class="card-body">
     <p class="card-text">%s</p>
-    <a href="%s" class="btn btn-light">Download</a>
   </div>
-</div>`, icon, name, maintainer, version, description,  "https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/"+filename))
+</div>`, url, name, maintainer, version, description))
 
 	}
 
@@ -96,7 +92,9 @@ func main() {
   </head>
   <body>
     <div class="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
-      <h1 class="display-4">Template Catalog</h1>
+      <h1 class="display-4">
+        Template Catalog
+      </h1>
       <p class="lead">Free reusable templates for Argo Workflows.</p>
     </div>
     <div class="container">

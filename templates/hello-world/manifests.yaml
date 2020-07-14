@@ -4,7 +4,6 @@ metadata:
   annotations:
     workflows.argoproj.io/description: This is a basic catalog example that simply
       prints "hello argo!".
-    workflows.argoproj.io/icon: 
     workflows.argoproj.io/maintainer: alex_collins@intuit.com
     workflows.argoproj.io/tags: example
     workflows.argoproj.io/version: '>= 2.9.0'
