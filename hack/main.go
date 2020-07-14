@@ -77,7 +77,7 @@ func main() {
     <p class="card-text">%s</p>
     <a href="%s" class="btn btn-light">Download</a>
   </div>
-</div>`, icon, name, maintainer, version, description,  "https://raw.githubusercontent.com/alexec/argo-workflows-catalog/master/"+filename))
+</div>`, icon, name, maintainer, version, description,  "https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/"+filename))
 
 	}
 

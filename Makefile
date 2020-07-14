@@ -1,0 +1,2 @@
+build:
+	go run ./hack
