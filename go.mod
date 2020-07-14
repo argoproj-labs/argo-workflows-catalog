@@ -1,4 +1,4 @@
-module github.com/alexec/argo-workflows-catalog
+module github.com/argoproj-labs/argo-workflows-catalog
 
 go 1.13
 
