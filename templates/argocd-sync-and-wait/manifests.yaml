@@ -43,7 +43,7 @@ spec:
       - name: ARGOCD_PASSWORD
         valueFrom:
           secretKeyRef:
-            key: username
+            key: password
             name: '{{inputs.parameters.argocd-credentials-secret}}'
             optional: true
       - name: ARGOCD_SERVER
