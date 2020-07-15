@@ -2,14 +2,17 @@ package main
 
 import (
 	"fmt"
+	"image/png"
 	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/Masterminds/semver"
+	"github.com/nfnt/resize"
+	"github.com/oliamb/cutter"
 	"sigs.k8s.io/yaml"
 )
 
-//https://getbootstrap.com/docs/4.0/examples/pricing/
 type obj = map[string]interface{}
 
 func main() {
@@ -70,11 +73,52 @@ func main() {
             <p class="card-subtitle text-muted">By %s <span class="badge badge-light">%s</span></p>
         </div>
     </div>
+  <img class="card-img-top" src="%s/icon.png" alt="Icon">
   <div class="card-body">
     <p class="card-text">%s</p>
   </div>
-</div>`, url, name, maintainer, version, description))
+</div>`, url, name, maintainer, version, name, description))
 
+		icon, err := os.Open("templates/" + name + "/icon.png")
+		if err != nil {
+			panic("failed to open icon:" + err.Error())
+		}
+		img, err := png.Decode(icon)
+		if err != nil {
+			panic("failed to decode icon:" + err.Error())
+		}
+		err = icon.Close()
+		if err != nil {
+			panic("failed to close icon: " + err.Error())
+		}
+		if img.Bounds().Max.X > 320 || img.Bounds().Max.Y > 180 {
+			tall := img.Bounds().Max.Y > img.Bounds().Max.X
+			if tall {
+				img = resize.Resize(320, 0, img, resize.Lanczos3)
+			} else {
+				img = resize.Resize(0, 180, img, resize.Lanczos3)
+			}
+			img, err = cutter.Crop(img, cutter.Config{Width: 320, Height: 180, Mode: cutter.Centered})
+			if err != nil {
+				panic("failed to crop icon: " + err.Error())
+			}
+			err := os.Mkdir("docs/"+name, 0777)
+			if err != nil && !os.IsExist(err) {
+				panic("failed to create directory: " + err.Error())
+			}
+			out, err := os.Create("docs/" + name + "/icon.png")
+			if err != nil {
+				panic("failed to create icon: " + err.Error())
+			}
+			err = png.Encode(out, img)
+			if err != nil {
+				panic("failed to encode icon: " + err.Error())
+			}
+			err = out.Close()
+			if err != nil {
+				panic("failed to close icon: " + err.Error())
+			}
+		}
 	}
 
 	err = ioutil.WriteFile("docs/index.html", []byte(fmt.Sprintf(`<!doctype html>
