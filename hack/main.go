@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"image/png"
 	"io/ioutil"
 	"os"
@@ -62,22 +61,22 @@ func main() {
 			panic("must have at least one tag")
 		}
 		maintainer := annotations["workflows.argoproj.io/maintainer"].(string)
-		if !strings.Contains(maintainer, "@") {
-			panic("invalid maintainer, must be email address: " + maintainer)
+		if !strings.HasPrefix(maintainer, "@") {
+			panic("invalid maintainer, must be Github username starting with \"@\": " + maintainer)
 		}
 		url := "https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/" + filename
-		cards = append(cards, fmt.Sprintf(`<div class="card box-shadow">
+		cards = append(cards, `<div class="card box-shadow">
     <div class="card-header">
         <div class="media-body">
-            <h3 class="card-title"><a href="%s">%s</a></h3>
-            <p class="card-subtitle text-muted">By %s <span class="badge badge-light">%s</span></p>
+            <h3 class="card-title"><a href="`+url+`">`+name+`</a></h3>
+            <p class="card-subtitle text-muted">By <a href="https://github.com/`+maintainer+`"> <span class="badge badge-light">`+version+`</span></p>
         </div>
     </div>
-  <img class="card-img-top" src="%s/icon.png" alt="Icon">
+  <img class="card-img-top" src="`+name+`/icon.png" alt="Icon">
   <div class="card-body">
-    <p class="card-text">%s</p>
+    <p class="card-text">`+description+`</p>
   </div>
-</div>`, url, name, maintainer, version, name, description))
+</div>`)
 
 		icon, err := os.Open("templates/" + name + "/icon.png")
 		if err != nil {
@@ -121,7 +120,7 @@ func main() {
 		}
 	}
 
-	err = ioutil.WriteFile("docs/index.html", []byte(fmt.Sprintf(`<!doctype html>
+	err = ioutil.WriteFile("docs/index.html", []byte(`<!doctype html>
 <html lang="en">
   <head>
     <!-- Required meta tags -->
@@ -132,7 +131,7 @@ func main() {
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
 
-    <title>%s</title>
+    <title>Argo Workflows Catalog</title>
   </head>
   <body>
     <div class="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
@@ -143,7 +142,7 @@ func main() {
     </div>
     <div class="container">
       <div class="card-deck text-center">
-        %s
+        `+strings.Join(cards, "")+`
       </div>
     </div>
 
@@ -153,7 +152,7 @@ func main() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
   </body>
-</html>`, "Argo Workflow Catalog", strings.Join(cards, ""))), 0644)
+</html>`), 0644)
 	if err != nil {
 		panic("failed to save index: " + err.Error())
 	}
