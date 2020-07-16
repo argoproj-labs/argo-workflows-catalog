@@ -140,6 +140,7 @@ func main() {
         Template Catalog
       </h1>
       <p class="lead">Free reusable templates for Argo Workflows.</p>
+      <p><a href="https://github.com/argoproj-labs/argo-workflows-catalog/blob/master/README.md" class='btn btn-light'>How to contribute</a></p>
     </div>
     <div class="container">
       <div class="card-deck text-center">
