@@ -1,0 +1,70 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  annotations:
+    workflows.argoproj.io/description: |
+      Checkout out from Git, build and test a Golang application.
+    workflows.argoproj.io/maintainer: '@alexec'
+    workflows.argoproj.io/tags: golang, git
+    workflows.argoproj.io/version: '>= 2.9.0'
+  name: go-build
+spec:
+  entrypoint: main
+  arguments:
+    parameters:
+      - name: repo
+        value: https://github.com/argoproj-labs/argo-workflows-catalog.git
+      - name: branch
+        value: master
+      - name: output
+        value: argo-workflows-catalog
+  templates:
+    - name: main
+      steps:
+        - - name: checkout
+            template: checkout
+        - - name: build
+            template: build
+        - - name: test
+            template: test
+    - name: checkout
+      script:
+        image: golang:1.14
+        workingDir: /work
+        args:
+          - sh
+        # use --depth 1 and --single-branch for fastest possible checkout
+        source: git clone --depth 1 --single-branch --branch {{workflow.parameters.branch}} {{workflow.parameters.repo}} .
+        volumeMounts:
+          - mountPath: /work
+            name: work
+    - name: build
+      script:
+        image: golang:1.14
+        workingDir: /work
+        args:
+          - sh
+        source: go build -o {{workflow.parameters.output}} -v ./...
+        volumeMounts:
+          - mountPath: /work
+            name: work
+    - name: test
+      script:
+        image: golang:1.14
+        workingDir: /work
+        args:
+          - sh
+        source: go test -v ./...
+        volumeMounts:
+          - mountPath: /work
+            name: work
+  volumeClaimTemplates:
+    # A shared work volume.
+    - name: work
+      metadata:
+        name: work
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 64Mi
