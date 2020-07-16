@@ -68,13 +68,14 @@ func main() {
 		cards = append(cards, `<div class="card box-shadow">
     <div class="card-header">
         <div class="media-body">
-            <h3 class="card-title"><a href="`+url+`">`+name+`</a></h3>
-            <p class="card-subtitle text-muted">By <a href="https://github.com/`+maintainer+`"> <span class="badge badge-light">`+version+`</span></p>
+            <h3 class="card-title">`+name+`</h3>
+            <p class="card-subtitle text-muted">By <a href="https://github.com/`+strings.TrimSuffix(maintainer, "@")+`">`+maintainer+`</a> <span class="badge badge-light">`+version+`</span></p>
         </div>
     </div>
   <img class="card-img-top" src="`+name+`/icon.png" alt="Icon">
   <div class="card-body">
     <p class="card-text">`+description+`</p>
+    <p class="card-text"><a href="`+url+`" class='btn btn-light'>Get</a></p>
   </div>
 </div>`)
 
