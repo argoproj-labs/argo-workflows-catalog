@@ -1,18 +1,21 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
+  name: argocd-sync-and-wait
   annotations:
-    workflows.argoproj.io/description: |-
+    workflows.argoproj.io/description: >-
       This task syncs (deploys) an Argo CD application and waits for it to be healthy.
-      To do so, it requires the address of the Argo CD server and some form of authentication either a username/password or an authentication token.
+
+      To do so, it requires the address of the Argo CD server and some form of
+      authentication either a username/password or an authentication token.
     workflows.argoproj.io/maintainer: '@dcherman'
     workflows.argoproj.io/tags: argocd
     workflows.argoproj.io/version: '>= 2.9.0'
-  name: argocd-sync-and-wait
 spec:
   entrypoint: argocd-sync-and-wait
   templates:
-  - inputs:
+  - name: argocd-sync-and-wait
+    inputs:
       parameters:
       - name: argocd-version
         value: v1.6.0
@@ -23,38 +26,46 @@ spec:
         value: --
       - name: argocd-server-address
       - name: argocd-credentials-secret
-    name: argocd-sync-and-wait
     script:
-      command:
-      - bash
-      env:
-      - name: ARGOCD_AUTH_TOKEN
-        valueFrom:
-          secretKeyRef:
-            key: token
-            name: '{{inputs.parameters.argocd-credentials-secret}}'
-            optional: true
-      - name: ARGOCD_USERNAME
-        valueFrom:
-          secretKeyRef:
-            key: username
-            name: '{{inputs.parameters.argocd-credentials-secret}}'
-            optional: true
-      - name: ARGOCD_PASSWORD
-        valueFrom:
-          secretKeyRef:
-            key: password
-            name: '{{inputs.parameters.argocd-credentials-secret}}'
-            optional: true
-      - name: ARGOCD_SERVER
-        value: '{{inputs.parameters.argocd-server-address}}'
       image: argoproj/argocd:{{inputs.parameters.argocd-version}}
-      source: "#!/bin/bash\n\nset -euo pipefail\n\nif [[ -z $ARGOCD_AUTH_TOKEN ]]
-        && [[ -z \"$ARGOCD_USERNAME\" || -z \"$ARGOCD_PASSWORD\" ]]; then\n  echo
-        \"Either the ARGOCD_AUTH_TOKEN must be specified, or the ARGOCD_USERNAME/ARGOCD_PASSWORD
-        must be specified.\"\n  exit 1\nfi \n\nif [ -z $ARGOCD_AUTH_TOKEN ]; then\n
-        \ yes | argocd login \"$ARGOCD_SERVER\" --username=$ARGOCD_USERNAME --password=$ARGOCD_PASSWORD
-        {{inputs.parameters.flags}}\nfi\n\necho \"Running as ArgoCD User:\"\nargocd
-        account get-user-info {{inputs.parameters.flags}}\n\nargocd app sync {{inputs.parameters.application-name}}
-        --revision {{inputs.parameters.revision}} {{inputs.parameters.flags}}\nargocd
-        app wait {{inputs.parameters.application-name}} --health {{inputs.parameters.flags}}\n"
+      command: [bash]
+      env:
+        - name: ARGOCD_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: "{{inputs.parameters.argocd-credentials-secret}}"
+              key: token
+              optional: true
+        - name: ARGOCD_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: "{{inputs.parameters.argocd-credentials-secret}}"
+              key: username
+              optional: true
+        - name: ARGOCD_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: "{{inputs.parameters.argocd-credentials-secret}}"
+              key: password
+              optional: true
+        - name: ARGOCD_SERVER
+          value: "{{inputs.parameters.argocd-server-address}}"
+      source: |
+        #!/bin/bash
+
+        set -euo pipefail
+
+        if [[ -z $ARGOCD_AUTH_TOKEN ]] && [[ -z "$ARGOCD_USERNAME" || -z "$ARGOCD_PASSWORD" ]]; then
+          echo "Either the ARGOCD_AUTH_TOKEN must be specified, or the ARGOCD_USERNAME/ARGOCD_PASSWORD must be specified."
+          exit 1
+        fi 
+
+        if [ -z $ARGOCD_AUTH_TOKEN ]; then
+          yes | argocd login "$ARGOCD_SERVER" --username=$ARGOCD_USERNAME --password=$ARGOCD_PASSWORD {{inputs.parameters.flags}}
+        fi
+
+        echo "Running as ArgoCD User:"
+        argocd account get-user-info {{inputs.parameters.flags}}
+        
+        argocd app sync {{inputs.parameters.application-name}} --revision {{inputs.parameters.revision}} {{inputs.parameters.flags}}
+        argocd app wait {{inputs.parameters.application-name}} --health {{inputs.parameters.flags}}
