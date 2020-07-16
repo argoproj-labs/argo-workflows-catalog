@@ -33,15 +33,6 @@ func main() {
 		if err != nil {
 			panic("invalid YAML:" + err.Error())
 		}
-		// format and normalise the manifest
-		data, err = yaml.Marshal(manifest)
-		if err != nil {
-			panic("failed to marshall YAML:" + err.Error())
-		}
-		err = ioutil.WriteFile(filename, data, 0644)
-		if err != nil {
-			panic("failed to same manifest:" + err.Error())
-		}
 		kind := manifest["kind"].(string)
 		if kind != "WorkflowTemplate" {
 			panic(name + " kind must be WorkflowTemplate")
