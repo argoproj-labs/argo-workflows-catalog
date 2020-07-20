@@ -38,14 +38,14 @@ func main() {
 			panic(name + " kind must be WorkflowTemplate")
 		}
 		annotations := manifest["metadata"].(obj)["annotations"].(obj)
-		version := annotations["workflows.argoproj.io/version"].(string)
+		version := strings.TrimSpace(annotations["workflows.argoproj.io/version"].(string))
 		_, err = semver.NewConstraint(version)
 		if err != nil {
 			panic("invalid version (must be semver constraint): " + err.Error())
 		}
-		description := annotations["workflows.argoproj.io/description"].(string)
+		description := strings.TrimSpace(annotations["workflows.argoproj.io/description"].(string))
 		if !strings.HasSuffix(description, ".") {
-			panic("description must end with period")
+			panic("description must end with period: "+description)
 		}
 		tags := strings.Split(annotations["workflows.argoproj.io/tags"].(string), ",")
 		if len(tags) == 1 && tags[0] == "" {
