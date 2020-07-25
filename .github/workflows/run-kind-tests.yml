@@ -1,0 +1,63 @@
+name: Catalog Integration Tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: engineerd/setup-kind@v0.4.0
+      with:
+        version: v0.8.1
+    - name: Run tests
+      run: |
+        kubectl create ns argo
+        kubectl apply -n argo -f https://raw.githubusercontent.com/argoproj/argo/v2.9.4/manifests/quick-start-minimal.yaml
+
+        # Swap the executor to PNS since Kind doesn't have the docker.sock available to it by default it seems
+        kubectl patch configmap/workflow-controller-configmap \
+          -n argo \
+          --type merge \
+          -p '{"data":{"containerRuntimeExecutor":"pns"}}'
+
+        curl -sLO https://github.com/argoproj/argo/releases/download/v2.9.4/argo-linux-amd64
+        chmod +x argo-linux-amd64
+
+        mkdir -p ~/.local/bin
+        mv ./argo-linux-amd64 ~/.local/bin/argo
+
+        export PATH="$PATH:~/.local/bin"
+
+        find templates -type f -name manifests.yaml | while read f; do
+          kubectl apply -n argo -f "$f"
+        done
+
+        failed=0
+        
+        find templates -type f -path "*tests*" -name "*.yaml" | while read f; do
+          echo "Running tests in $f"
+
+          wfname=$(argo submit -n argo -o name "$f")
+
+          argo watch -n argo "$wfname"
+          
+          # Argo wait exits with the status code of the workflow whereas watch does not
+          # so use it to determine pass/fail
+          if ! argo wait -n argo "$wfname"; then
+            # Mark the run as failed but allow the rest of the tests to continue running
+            echo "[FAIL] $f"
+
+            argo logs -n argo "$wfname"
+            failed=1
+          else
+            echo "[PASS] $f"
+          fi
+        done
+
+        exit $failed
+      
