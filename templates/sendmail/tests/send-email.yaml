@@ -1,0 +1,142 @@
+  
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: send-email-
+spec:
+  entrypoint: run-test
+  templates:
+  - name: run-test
+    steps:
+    - - name: smtp
+        template: smtp-server
+    - - name: encode-ip
+        template: base64encode
+        arguments:
+          parameters:
+            - name: input
+              value: "{{steps.smtp.ip}}"
+    - - name: create-smtp-secret
+        template: create-smtp-secret
+        arguments:
+          parameters:
+            - name: url
+              value: "{{steps.encode-ip.outputs.parameters.encoded}}"
+    - - name: sendmail
+        templateRef:
+          template: sendmail
+          name: sendmail
+        arguments:
+          parameters:
+            - name: sender
+              value: sender@foo.com
+            - name: body
+              value: Argo Rocks!
+            - name: subject
+              value: Hi
+            - name: recipients
+              value: receiver@bar.com
+            - name: smtp-secret
+              value: "{{steps.create-smtp-secret.outputs.parameters.secret-name}}"
+    - - name: assert
+        template: assert
+        arguments:
+          parameters:
+            - name: smtp_ip
+              value: "{{steps.smtp.ip}}"
+  - name: smtp-server
+    daemon: true
+    container:
+      image: reachfive/fake-smtp-server
+
+  - name: base64encode
+    inputs:
+      parameters:
+        - name: input
+    outputs:
+      parameters:
+        - name: encoded
+          valueFrom:
+            path: /tmp/encoded
+    script:
+      image: alpine:latest
+      command: [sh]
+      source: |
+        echo -n "{{inputs.parameters.input}}" | base64 > /tmp/encoded
+
+  - name: create-smtp-secret
+    inputs:
+      parameters:
+        - name: url
+    outputs:
+      parameters:
+        - name: secret-name
+          valueFrom:
+            jsonPath: '{.metadata.name}'
+    resource:
+      action: create
+      setOwnerReference: true
+      manifest: |
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          generateName: smtp-secret-{{workflow.name}}
+          namespace: {{workflow.namespace}}
+        data:
+          url: {{inputs.parameters.url}}
+
+          # 1025
+          port: MTAyNQ==
+
+          user: ""
+          password: ""
+
+          # False
+          tls: RmFsc2U=
+
+  - name: assert
+    inputs:
+      parameters:
+        - name: smtp_ip
+    script:
+      image: alpine:latest
+      command: [sh]
+      source: |
+        apk add --update-cache jq curl
+
+        EMAILS=$(curl http://{{inputs.parameters.smtp_ip}}:1080/api/emails)
+
+        echo "$EMAILS"
+
+        EMAILS_LEN=$(echo "$EMAILS" | jq -r  '. | length')
+
+        if [[ "$EMAILS_LEN" -ne 1 ]]; then
+          echo "expected 1 emails to be received but got $EMAILS_LEN"
+          exit 1
+        fi
+
+        EMAIL_SUBJECT=$(echo "$EMAILS" | jq -r '.[0].subject')
+        EMAIL_BODY=$(echo "$EMAILS" | jq -r '.[0].text')
+        EMAIL_FROM=$(echo "$EMAILS" | jq -r '.[0].from.text')
+        EMAIL_TO=$(echo "$EMAILS" | jq -r '.[0].to.text')
+
+        if [[ "$EMAIL_SUBJECT" != "Hi" ]]; then
+          echo "expected email subject to be Hi, got $EMAIL_SUBJECT"
+          exit 1
+        fi
+
+        if [[ "$EMAIL_BODY" != "Argo Rocks!" ]]; then
+          echo "expected email subject to be Argo Rocks!, got $EMAIL_BODY"
+          exit 1
+        fi
+
+        if [[ "$EMAIL_FROM" != "sender@foo.com" ]]; then
+          echo "expected sender to be sender@foo.com, got $EMAIL_FROM"
+          exit 1
+        fi
+
+         if [[ "$EMAIL_TO" != "receiver@bar.com" ]]; then
+          echo "expected receiver to be receiver@bar.com, got $EMAIL_TO"
+          exit 1
+        fi
+
