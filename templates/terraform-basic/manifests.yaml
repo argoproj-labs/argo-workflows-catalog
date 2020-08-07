@@ -1,0 +1,82 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  annotations:
+    workflows.argoproj.io/description: This workflow run a basic Terraform plan
+    workflows.argoproj.io/maintainer: '@descrepes'
+    workflows.argoproj.io/tags: terraform
+    workflows.argoproj.io/version: '>= 2.9.0'
+  name: terraform-basic
+spec:
+  entrypoint: update
+  arguments:
+    parameters:
+    - name: terraform-docker-image
+      value: "descrepes/terraform:0.12.9-demo"
+    - name: terraform-script-repository
+      value: "https://github.com/descrepes/terraform-argo-vmpool-demo.git"
+  templates:
+    - name: plan
+      inputs:
+        artifacts:
+        - name: terraform
+          path: /home/terraform
+          git:
+            repo: {{workflow.parameters.terraform-script-repository}}
+            depth: 1
+      script:
+        imagePullPolicy: "Always"
+        image: {{workflow.parameters.terraform-docker-image}}
+        command: ["sh"]
+        source: |
+          cp /home/terraform/*.tf /home/argo/
+
+          /bin/terraform init -input=false /home/argo
+          /bin/terraform plan -parallelism=2 -input=false -no-color -out=/home/argo/tfclientsplan /home/argo >> /tmp/terraform-change.log
+      outputs:
+        artifacts:
+          - name: terraform-plan
+            path: /home/argo/
+            archive:
+              none: {}
+          - name: terraform-log
+            path: /tmp/terraform-change.log
+            archive:
+              none: {}
+
+    - name: apply
+      inputs:
+        artifacts:
+        - name: terraform-plan
+          path: /home/terraform
+      script:
+        imagePullPolicy: "Always"
+        image: {{workflow.parameters.terraform-docker-image}}
+        command: ["sh"]
+        source: |
+          /bin/terraform apply -input=false -parallelism=2 -no-color /home/terraform/tfclientsplan
+
+    - name: approve
+      suspend: {}
+
+    - name: update
+      dag:
+        tasks:
+          - name: plan
+            template: plan
+            outputs:
+              artifacts:
+                - name: terraform-plan
+                  path: /home/argo/
+          - name: approve
+            dependencies: [plan]
+            template: approve
+          - name: apply
+            template: apply
+            dependencies: [plan, approve]
+            arguments:
+              artifacts:
+              - name: terraform-plan
+                from: "{{tasks.plan.outputs.artifacts.terraform-plan}}"
+
+
