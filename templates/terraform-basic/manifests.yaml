@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   annotations:
-    workflows.argoproj.io/description: This workflow run a basic Terraform plan
+    workflows.argoproj.io/description: This workflow run a basic Terraform plan.
     workflows.argoproj.io/maintainer: '@descrepes'
     workflows.argoproj.io/tags: terraform
     workflows.argoproj.io/version: '>= 2.9.0'
@@ -22,11 +22,11 @@ spec:
         - name: terraform
           path: /home/terraform
           git:
-            repo: {{workflow.parameters.terraform-script-repository}}
+            repo: "{{workflow.parameters.terraform-script-repository}}"
             depth: 1
       script:
         imagePullPolicy: "Always"
-        image: {{workflow.parameters.terraform-docker-image}}
+        image: "{{workflow.parameters.terraform-docker-image}}"
         command: ["sh"]
         source: |
           cp /home/terraform/*.tf /home/argo/
@@ -51,7 +51,7 @@ spec:
           path: /home/terraform
       script:
         imagePullPolicy: "Always"
-        image: {{workflow.parameters.terraform-docker-image}}
+        image: "{{workflow.parameters.terraform-docker-image}}"
         command: ["sh"]
         source: |
           /bin/terraform apply -input=false -parallelism=2 -no-color /home/terraform/tfclientsplan
