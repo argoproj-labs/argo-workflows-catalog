@@ -1,0 +1,78 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  annotations:
+    workflows.argoproj.io/description: >-
+      this workflow template contains a template to make simple notifications and a template to upload a file with a header and a footer.
+    workflows.argoproj.io/maintainer: '@descrepes'
+    workflows.argoproj.io/tags: slack
+    workflows.argoproj.io/version: '>= 2.9.0'
+  name: slack
+spec:
+  templates:
+    - name: notify
+      inputs:
+        parameters:
+          - name: channel
+          - name: message
+          - name: color
+          - name: slack-secret
+      script:
+        imagePullPolicy: "Always"
+        image: descrepes/slack-cli:latest
+        env:
+          - name: SLACK_CHANNEL
+            value: "{{inputs.parameters.channel}}"
+          - name: SLACK_MESSAGE
+            value: "{{inputs.parameters.message}}"
+          - name: SLACK_COLOR
+            value: "{{inputs.parameters.color}}"
+          - name: SLACK_WEBHOOK
+            valueFrom:
+              secretKeyRef:
+                name: "{{inputs.parameters.slack-secret}}"
+                key: webhook
+        command: ["sh"]
+        source: |
+          slack-notify
+
+
+    - name: file
+      inputs:
+        artifacts:
+          - name: file
+            path: /home/log
+            mode: 0755
+        parameters:
+          - name: header
+            default: ""
+          - name: footer
+            default: ""
+          - name: team
+          - name: channel
+          - name: color
+            default: "3399FF"
+          - name: slack-secret
+      script:
+        imagePullPolicy: "Always"
+        image: descrepes/slack-cli:latest
+        env:
+          - name: SLACK_CHANNEL
+            value: "{{inputs.parameters.channel}}"
+          - name: SLACK_COLOR
+            value: "{{inputs.parameters.color}}"
+          - name: SLACK_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: "{{inputs.parameters.slack-secret}}"
+                key: token
+          - name: SLACK_WEBHOOK
+            valueFrom:
+              secretKeyRef:
+                name: "{{inputs.parameters.slack-secret}}"
+                key: webhook
+        command: ["sh"]
+        source: |
+          if [ ! -z "{{inputs.parameters.header}}" ]; then SLACK_MESSAGE="{{inputs.parameters.header}}" slack-notify; fi
+          slack-cli -d {{inputs.parameters.channel}} -T {{inputs.parameters.team}} -f /home/log
+          if [ ! -SLACK_WEBHOOKz "{{inputs.parameters.footer}}" ]; then SLACK_MESSAGE="{{inputs.parameters.footer}}" slack-notify; fi
