@@ -1,0 +1,47 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  annotations:
+    workflows.argoproj.io/description: |
+      This is a workflow template that allows you to run a Jenkinsfile pipeline in a
+      container by using the `jenkins/jenkinsfile-runner` image.
+    workflows.argoproj.io/maintainer: '@dcherman'
+    workflows.argoproj.io/tags: jenkins,ci
+    workflows.argoproj.io/version: '>= 2.9.0'
+  name: jenkins-pipeline
+spec:
+  entrypoint: run-jenkins-pipeline
+  templates:
+  - name: run-jenkins-pipeline
+    inputs:
+      artifacts:
+        - name: jenkinsfile
+          path: /pipeline/jenkinsfile
+        - name: plugins
+          path: /pipeline/plugins.txt
+          optional: true
+      parameters:
+      - name: image
+        value: jenkins/jenkinsfile-runner
+      - name: build-number
+        value: 1
+      - name: cause
+        value: "argo-workflow"
+      - name: job-name
+        value: "job"
+    script:
+      image: "{{inputs.parameters.image}}"
+      command: [bash]
+      source: |
+        set -euox pipefail
+
+        ARGS=(--file="/pipeline/jenkinsfile")
+        ARGS+=(--build-number="{{inputs.parameters.build-number}}")
+        ARGS+=(--cause="{{inputs.parameters.cause}}")
+        ARGS+=(--job-name="{{inputs.parameters.job-name}}")
+
+        if [[ -f /pipeline/plugins.txt ]]; then
+          ARGS+=(--plugins="/pipeline/plugins.txt")
+        fi
+
+        /app/bin/jenkinsfile-runner-launcher "${ARGS[@]}"

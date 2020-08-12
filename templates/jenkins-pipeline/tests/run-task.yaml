@@ -1,0 +1,58 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: workflow-template-jenkins-pipeline-
+spec:
+  entrypoint: run-test
+  templates:
+  - name: run-test
+    steps:
+    - - name: run-jenkins-pipeline-basic
+        templateRef:
+          name: jenkins-pipeline
+          template: run-jenkins-pipeline
+        arguments:
+          artifacts:
+            - name: plugins
+              raw:
+                data: |
+                  credentials
+                  mailer
+                  display-url-api
+                  structs
+                  slack
+                  token-macro
+                  script-security
+                  jackson2-api
+                  junit
+                  plain-credentials
+                  workflow-step-api
+                  apache-httpcomponents-client-4-api
+                  echarts-api
+                  workflow-api
+                  scm-api
+                  jquery3-api
+                  plugin-util-api
+                  snakeyaml-api
+                  durable-task
+            - name: jenkinsfile
+              raw:
+                data: |
+                  pipeline {
+                      agent any
+                      parameters {
+                          string(name: 'param1', defaultValue: '', description: 'Greeting message')
+                          string(name: 'param2', defaultValue: '', description: '2nd parameter')
+                      }
+                      stages {
+                          stage('Build') {
+                              steps {
+                                  echo 'Hello world!'
+                                  echo "message: ${params.param1}"
+                                  echo "param2: ${params.param2}"
+                                  sh 'ls -la'
+                              }
+                          }
+                      }
+                  }
+
