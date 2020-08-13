@@ -45,7 +45,7 @@ func main() {
 		}
 		description := strings.TrimSpace(annotations["workflows.argoproj.io/description"].(string))
 		if !strings.HasSuffix(description, ".") {
-			panic("description must end with period: "+description)
+			panic("description must end with period: " + description)
 		}
 		tags := strings.Split(annotations["workflows.argoproj.io/tags"].(string), ",")
 		if len(tags) == 1 && tags[0] == "" {
@@ -82,14 +82,15 @@ func main() {
 		if err != nil {
 			panic("failed to close icon: " + err.Error())
 		}
-		if img.Bounds().Max.X > 320 || img.Bounds().Max.Y > 180 {
-			tall := img.Bounds().Max.Y > img.Bounds().Max.X
+		max := img.Bounds().Max
+		if max.X > 320 || max.Y > 180 {
+			tall := max.X/max.Y > 2
 			if tall {
-				img = resize.Resize(320, 0, img, resize.Lanczos3)
+				img = resize.Resize(0, 160, img, resize.Lanczos3)
 			} else {
-				img = resize.Resize(0, 180, img, resize.Lanczos3)
+				img = resize.Resize(320, 0, img, resize.Lanczos3)
 			}
-			img, err = cutter.Crop(img, cutter.Config{Width: 320, Height: 180, Mode: cutter.Centered})
+			img, err = cutter.Crop(img, cutter.Config{Width: 320, Height: 160, Mode: cutter.Centered})
 			if err != nil {
 				panic("failed to crop icon: " + err.Error())
 			}
