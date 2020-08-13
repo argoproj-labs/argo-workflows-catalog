@@ -134,7 +134,7 @@ func main() {
       <p><a href="https://github.com/argoproj-labs/argo-workflows-catalog/blob/master/README.md" class='btn btn-light'>How to contribute</a></p>
     </div>
     <div class="container">
-      <div class="card-deck text-center">
+      <div class="card-columns">
         `+strings.Join(cards, "")+`
       </div>
     </div>
