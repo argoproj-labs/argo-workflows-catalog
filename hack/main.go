@@ -79,33 +79,31 @@ func main() {
 			panic("failed to close icon: " + err.Error())
 		}
 		max := img.Bounds().Max
-		if max.X > 320 || max.Y > 180 {
-			tall := max.X/max.Y > 2
-			if tall {
-				img = resize.Resize(0, 160, img, resize.Lanczos3)
-			} else {
-				img = resize.Resize(320, 0, img, resize.Lanczos3)
-			}
-			img, err = cutter.Crop(img, cutter.Config{Width: 320, Height: 160, Mode: cutter.Centered})
-			if err != nil {
-				panic("failed to crop icon: " + err.Error())
-			}
-			err := os.Mkdir("docs/"+name, 0777)
-			if err != nil && !os.IsExist(err) {
-				panic("failed to create directory: " + err.Error())
-			}
-			out, err := os.Create("docs/" + name + "/icon.png")
-			if err != nil {
-				panic("failed to create icon: " + err.Error())
-			}
-			err = png.Encode(out, img)
-			if err != nil {
-				panic("failed to encode icon: " + err.Error())
-			}
-			err = out.Close()
-			if err != nil {
-				panic("failed to close icon: " + err.Error())
-			}
+		tall := max.X/max.Y > 2
+		if tall {
+			img = resize.Resize(0, 160, img, resize.Lanczos3)
+		} else {
+			img = resize.Resize(320, 0, img, resize.Lanczos3)
+		}
+		img, err = cutter.Crop(img, cutter.Config{Width: 320, Height: 160, Mode: cutter.Centered})
+		if err != nil {
+			panic("failed to crop icon: " + err.Error())
+		}
+		err = os.Mkdir("docs/"+name, 0777)
+		if err != nil && !os.IsExist(err) {
+			panic("failed to create directory: " + err.Error())
+		}
+		out, err := os.Create("docs/" + name + "/icon.png")
+		if err != nil {
+			panic("failed to create icon: " + err.Error())
+		}
+		err = png.Encode(out, img)
+		if err != nil {
+			panic("failed to encode icon: " + err.Error())
+		}
+		err = out.Close()
+		if err != nil {
+			panic("failed to close icon: " + err.Error())
 		}
 	}
 
