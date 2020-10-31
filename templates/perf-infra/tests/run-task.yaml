@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: workflow-template-hello-world-
+  generateName: workflow-template-perf-infra-
 spec:
   entrypoint: run-test
   templates:
