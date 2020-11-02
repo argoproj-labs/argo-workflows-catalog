@@ -1,9 +1,13 @@
-# Stress test to test upper bounds of concurrent pods
-# How to setup your s3 credentials in secret and read from it
-# kubectl create secret generic my-s3-credentials --from-literal=accessKey=<YOUR-ACCESS-KEY> --from-literal=secretKey=<YOUR-SECRET-KEY>
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
+  annotations:
+    workflows.argoproj.io/description: >-
+      this workflow template contains a template to make simple test-container executed via argo.
+    workflows.argoproj.io/maintainer: '@sumitnagal'
+    workflows.argoproj.io/tags: distro
+    workflows.argoproj.io/version: '>= 2.9.0'
+  name: distro
   generateName: perf-infra-
 spec:
   serviceAccountName: argowf-svcacc
