@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  annotations:
+    workflows.argoproj.io/description: Templates with operations related to container images.
+    workflows.argoproj.io/maintainer: '@vfarcic'
+    workflows.argoproj.io/tags: container
+    workflows.argoproj.io/version: '>= 2.9.0'
+  name: container-image
+spec:
+  templates:
+  - name: build-kaniko-git
+    inputs:
+      parameters:
+      - name: app_repo
+      - name: container_image
+      - name: container_tag
+    container:
+      image: gcr.io/kaniko-project/executor:debug
+      args:
+      - --context={{inputs.parameters.app_repo}}
+      - --destination={{inputs.parameters.container_image}}:{{inputs.parameters.container_tag}}
+      volumeMounts:
+        - name: kaniko-secret
+          mountPath: /kaniko/.docker/
+  
