@@ -4,6 +4,7 @@ import (
 	"image/png"
 	"io/ioutil"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/Masterminds/semver"
@@ -48,6 +49,7 @@ func main() {
 			panic("description must end with period: " + description)
 		}
 		tags := strings.Split(annotations["workflows.argoproj.io/tags"].(string), ",")
+		sort.Strings(tags)
 		if len(tags) == 1 && tags[0] == "" {
 			panic("must have at least one tag")
 		}
@@ -61,7 +63,8 @@ func main() {
     <h3><i class='fa fa-sitemap'></i> `+name+`</h3>
     <p class="text-muted">By <a href="https://github.com/`+strings.TrimSuffix(maintainer, "@")+`">`+maintainer+`</a> <span class="badge badge-light">`+version+`</span></p>
     <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">`+description+`</p>
-    <p><a href="`+url+`" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></p>
+	<p>`+formatTags(tags)+`</p>
+    <div<a href="`+url+`" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></div>
 </div>
 </div>`)
 
@@ -141,4 +144,12 @@ func main() {
 	if err != nil {
 		panic("failed to save index: " + err.Error())
 	}
+}
+
+func formatTags(tags []string) string {
+	html := ""
+	for _, tag := range tags {
+		html += `<span class="badge badge-secondary">` + tag + `</span>`
+	}
+	return html
 }
