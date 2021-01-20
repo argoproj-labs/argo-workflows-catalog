@@ -64,7 +64,22 @@ func main() {
     <p class="text-muted">By <a href="https://github.com/`+strings.TrimSuffix(maintainer, "@")+`">`+maintainer+`</a> <span class="badge badge-light">`+version+`</span></p>
     <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">`+description+`</p>
 	<p>`+formatTags(tags)+`</p>
-    <div<a href="`+url+`" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></div>
+    <div><button type="button" class="btn btn-light" data-toggle="modal" data-target="#`+name+`Modal">Get <i class="fa fa-angle-right"></i></button></div>
+<div class="modal" id="`+name+`Modal" tabindex="-1" aria-labelledby="`+name+`Label" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="`+name+`Label"><i class='fa fa-sitemap'></i> `+name+`</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">`+description+`</div>
+      <div class="modal-body"><pre><code>kubectl apply -f `+url+`</code></pre></div>
+      <div class="modal-body"><pre><code>`+string(data)+`</code></pre></div>
+    </div>
+  </div>
+</div>
 </div>
 </div>`)
 
@@ -117,7 +132,7 @@ func main() {
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
 
     <title>Argo Workflows Catalog</title>
@@ -139,6 +154,8 @@ func main() {
         `+strings.Join(cards, "")+`
       </div>
     </div>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns" crossorigin="anonymous"></script>
   </body>
 </html>`), 0644)
 	if err != nil {

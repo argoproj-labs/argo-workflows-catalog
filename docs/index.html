@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
 
     <title>Argo Workflows Catalog</title>
@@ -32,7 +32,94 @@
     <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">This task syncs (deploys) an Argo CD application and waits for it to be healthy.
 To do so, it requires the address of the Argo CD server and some form of authentication either a username/password or an authentication token.</p>
 	<p><span class="badge badge-secondary">argocd</span></p>
-    <div class="right-pull"><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/argocd-sync-and-wait/manifests.yaml" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></div>
+    <div><button type="button" class="btn btn-light" data-toggle="modal" data-target="#argocd-sync-and-waitModal">Get <i class="fa fa-angle-right"></i></button></div>
+<div class="modal" id="argocd-sync-and-waitModal" tabindex="-1" aria-labelledby="argocd-sync-and-waitLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="argocd-sync-and-waitLabel"><i class='fa fa-sitemap'></i> argocd-sync-and-wait</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">This task syncs (deploys) an Argo CD application and waits for it to be healthy.
+To do so, it requires the address of the Argo CD server and some form of authentication either a username/password or an authentication token.</div>
+      <div class="modal-body"><pre><code>kubectl apply -f https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/argocd-sync-and-wait/manifests.yaml</code></pre></div>
+      <div class="modal-body"><pre><code>apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: argocd-sync-and-wait
+  annotations:
+    workflows.argoproj.io/description: >-
+      This task syncs (deploys) an Argo CD application and waits for it to be healthy.
+
+      To do so, it requires the address of the Argo CD server and some form of
+      authentication either a username/password or an authentication token.
+    workflows.argoproj.io/maintainer: '@dcherman'
+    workflows.argoproj.io/tags: argocd
+    workflows.argoproj.io/version: '>= 2.9.0'
+spec:
+  entrypoint: argocd-sync-and-wait
+  templates:
+  - name: argocd-sync-and-wait
+    inputs:
+      parameters:
+      - name: argocd-version
+        value: v1.6.0
+      - name: application-name
+      - name: revision
+        value: HEAD
+      - name: flags
+        value: --
+      - name: argocd-server-address
+      - name: argocd-credentials-secret
+    script:
+      image: argoproj/argocd:{{inputs.parameters.argocd-version}}
+      command: [bash]
+      env:
+        - name: ARGOCD_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: "{{inputs.parameters.argocd-credentials-secret}}"
+              key: token
+              optional: true
+        - name: ARGOCD_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: "{{inputs.parameters.argocd-credentials-secret}}"
+              key: username
+              optional: true
+        - name: ARGOCD_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: "{{inputs.parameters.argocd-credentials-secret}}"
+              key: password
+              optional: true
+        - name: ARGOCD_SERVER
+          value: "{{inputs.parameters.argocd-server-address}}"
+      source: |
+        #!/bin/bash
+
+        set -euo pipefail
+
+        if [[ -z $ARGOCD_AUTH_TOKEN ]] && [[ -z "$ARGOCD_USERNAME" || -z "$ARGOCD_PASSWORD" ]]; then
+          echo "Either the ARGOCD_AUTH_TOKEN must be specified, or the ARGOCD_USERNAME/ARGOCD_PASSWORD must be specified."
+          exit 1
+        fi 
+
+        if [ -z $ARGOCD_AUTH_TOKEN ]; then
+          yes | argocd login "$ARGOCD_SERVER" --username=$ARGOCD_USERNAME --password=$ARGOCD_PASSWORD {{inputs.parameters.flags}}
+        fi
+
+        echo "Running as ArgoCD User:"
+        argocd account get-user-info {{inputs.parameters.flags}}
+        
+        argocd app sync {{inputs.parameters.application-name}} --revision {{inputs.parameters.revision}} {{inputs.parameters.flags}}
+        argocd app wait {{inputs.parameters.application-name}} --health {{inputs.parameters.flags}}
+</code></pre></div>
+    </div>
+  </div>
+</div>
 </div>
 </div><div class="col-sm-3">
 <div class="shadow p-3 mb-5 bg-white rounded">
@@ -40,7 +127,88 @@ To do so, it requires the address of the Argo CD server and some form of authent
     <p class="text-muted">By <a href="https://github.com/@alexec">@alexec</a> <span class="badge badge-light">>= 2.9.0</span></p>
     <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Build and push an image using Docker Buildkit. This does not need privileged access, unlike Docker in Docker (DIND).</p>
 	<p><span class="badge badge-secondary">buildkit</span></p>
-    <div class="right-pull"><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/buildkit/manifests.yaml" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></div>
+    <div><button type="button" class="btn btn-light" data-toggle="modal" data-target="#buildkitModal">Get <i class="fa fa-angle-right"></i></button></div>
+<div class="modal" id="buildkitModal" tabindex="-1" aria-labelledby="buildkitLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="buildkitLabel"><i class='fa fa-sitemap'></i> buildkit</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">Build and push an image using Docker Buildkit. This does not need privileged access, unlike Docker in Docker (DIND).</div>
+      <div class="modal-body"><pre><code>kubectl apply -f https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/buildkit/manifests.yaml</code></pre></div>
+      <div class="modal-body"><pre><code># Build and push an image using Docker Buildkit. This does not need privileged access, unlike Docker in Docker (DIND).
+#
+# Publishing images requires an access token. For hub.docker.com you can create one at https://hub.docker.com/settings/security
+# This needs to be mounted as `$DOCKER_CONFIG/config.json`. To do this, you'll need to create a secret as follows:
+#
+#   export DOCKER_USERNAME=******
+#   export DOCKER_TOKEN=******
+#   kubectl create secret generic docker-config --from-literal="config.json={\"auths\": {\"https://index.docker.io/v1/\": {\"auth\": \"$(echo -n $DOCKER_USERNAME:$DOCKER_TOKEN|base64)\"}}}"
+#
+#  Read more:
+#
+#     * https://github.com/moby/buildkit#expose-buildkit-as-a-tcp-service
+#     * https://blog.alexellis.io/building-containers-without-docker/
+#     * https://hub.docker.com/r/moby/buildkit
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: buildkit
+  annotations:
+    workflows.argoproj.io/description: |
+      Build and push an image using Docker Buildkit. This does not need privileged access, unlike Docker in Docker (DIND).
+    workflows.argoproj.io/maintainer: '@alexec'
+    workflows.argoproj.io/tags: buildkit
+    workflows.argoproj.io/version: '>= 2.9.0'
+spec:
+  templates:
+    - name: image
+      inputs:
+        parameters:
+          # Name of volume to mount
+          - name: work
+          # Path on the value
+          - name: path
+          # Name of the image to push
+          - name: image
+      # Mount the configuration so we can push the image.
+      # This should create the /.docker/config.json file.
+      volumes:
+        - name: docker-config
+          secret:
+            secretName: docker-config
+      container:
+        image: moby/buildkit:v0.7.2-rootless
+        volumeMounts:
+          - name: "{{inputs.parameters.work}}"
+            mountPath: /work
+          - name: docker-config
+            mountPath: /.docker
+        workingDir: /work/{{inputs.parameters.path}}
+        env:
+          - name: BUILDKITD_FLAGS
+            value: --oci-worker-no-process-sandbox
+          - name: DOCKER_CONFIG
+            value: /.docker
+        command:
+          - buildctl-daemonless.sh
+        args:
+          - build
+          - --frontend
+          - dockerfile.v0
+          - --local
+          - context=.
+          - --local
+          - dockerfile=.
+          - --output
+          - type=image,name=docker.io/{{inputs.parameters.image}},push=true
+</code></pre></div>
+    </div>
+  </div>
+</div>
 </div>
 </div><div class="col-sm-3">
 <div class="shadow p-3 mb-5 bg-white rounded">
@@ -48,7 +216,234 @@ To do so, it requires the address of the Argo CD server and some form of authent
     <p class="text-muted">By <a href="https://github.com/@sumitnagal">@sumitnagal</a> <span class="badge badge-light">>= 2.9.0</span></p>
     <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">This workflow template contains a template to make simple test-container executed via Argo.</p>
 	<p><span class="badge badge-secondary">distro</span></p>
-    <div class="right-pull"><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/distro/manifests.yaml" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></div>
+    <div><button type="button" class="btn btn-light" data-toggle="modal" data-target="#distroModal">Get <i class="fa fa-angle-right"></i></button></div>
+<div class="modal" id="distroModal" tabindex="-1" aria-labelledby="distroLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="distroLabel"><i class='fa fa-sitemap'></i> distro</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">This workflow template contains a template to make simple test-container executed via Argo.</div>
+      <div class="modal-body"><pre><code>kubectl apply -f https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/distro/manifests.yaml</code></pre></div>
+      <div class="modal-body"><pre><code>apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  annotations:
+    workflows.argoproj.io/description: >-
+      This workflow template contains a template to make simple test-container executed via Argo.
+    workflows.argoproj.io/maintainer: '@sumitnagal'
+    workflows.argoproj.io/tags: distro
+    workflows.argoproj.io/version: '>= 2.9.0'
+  name: distro
+  generateName: perf-infra-
+spec:
+  serviceAccountName: argowf-svcacc
+  entrypoint: perf-infra
+  poddisruptionbudget:
+    minavailable: 100%
+  # must complete in 1m
+  activeDeadlineSeconds: 86400
+  # keep workflows for 3m
+  ttlStrategy:
+    secondsAfterCompletion: 3600
+  # delete all pods as soon as they complete
+  podGC:
+    strategy: OnPodCompletion
+  arguments:
+    parameters:
+      - name: limit
+        value: 1
+      - name: peakTPS
+        value: 1
+      - name: rampupTime
+        value: 1
+      - name: steadyStateTime
+        value: 1
+      - name: gitrepo
+        value: "NA"
+      - name: buildURL
+        value: "NA"
+      - name: envName
+        value: "prf"
+      - name: buildnum
+        value: 1
+      - name: baseurl
+        value: "https://XXX.amazonaws.com"
+      - name: uniqueName
+        value: "{{workflow.creationTimestamp}}"
+      - name: dataFlag
+        value: "false"
+      - name: appTestImg
+        value: "distroproj/gatling:latest"
+      - name: awscliGatmergeImg
+        value: "distroproj/gatling-merge:latest"
+      - name: pfiNamespace
+        value: "infra-ns"
+      - name: query
+        value: "/health/full"
+      - name: simulationClass
+        value: "Echo.EchoSimulation"
+      - name: s3BucketName
+        value: perf-results-XXXX
+  templates:
+    - name: perf-infra
+      steps:
+        - - name: pdbcreate
+            template: pdbcreate 
+        - - name: run-test
+            template: run-test
+            withSequence:
+              count: "{{workflow.parameters.limit}}"
+        - - name: list-test
+            template: list
+        #  Un comment if you want to fetch reports via Jenkins or other CI systesm
+        # - - name: s3-access
+        #     template: s3access
+
+    - name: pdbcreate
+      container:
+        image: alpine:latest
+        command: [sh, -c]
+        args: [sleep 10]
+    
+    - name: run-test
+      metadata:
+        # If you are using role base access for your namespace configure this
+        # annotations:
+        #   iam.amazonaws.com/role: "k8s-{{workflow.parameters.pfiNamespace}}"
+      container:
+        image: "{{workflow.parameters.appTestImg}}"
+        imagePullPolicy: Always
+        command: ["sh","-c"]
+        args: [
+          "cd /gatling && mvn gatling:test -Dgatling.simulationClass={{workflow.parameters.simulationClass}} -Durl={{workflow.parameters.baseurl}} -Dquery={{workflow.parameters.query}} -DpeakTPS={{workflow.parameters.peakTPS}} -DrampupTime={{workflow.parameters.rampupTime}} -DsteadyStateTime={{workflow.parameters.steadyStateTime}} && cp -r /gatling/gatling_results /tmp && mkdir /tmp/simulations && cp $(find . -name 'simulation.log' | tail -1) /tmp/simulations/simulation_$(date +'%s')_$(cat /dev/urandom | env LC_CTYPE=C tr -cd 'a-f0-9' | head -c 6).log && ls /tmp"
+        ]
+        resources:                # limit the resources
+          requests:
+            memory: 1Gi
+            cpu: "1"
+          limits:
+            memory: 2Gi
+            cpu: "1"
+        # volumeMounts:
+        # - name: finalresults
+        #   mountPath: /tmp
+      outputs:
+        artifacts:
+          - name: simulation
+            path: /tmp/simulations
+            # It is possible to disable tar.gz archiving by setting the archive strategy to 'none'
+            # Disabling archiving has the following limitations on S3: symboloic links will not be
+            # uploaded, as S3 does not support the concept/file mode of symlinks.
+            # archive:
+            #   none: {}
+
+            s3:
+              # Use the corresponding endpoint depending on your S3 provider:
+              #   AWS: s3.amazonaws.com
+              #   GCS: storage.googleapis.com
+              #   Minio: my-minio-endpoint.default:9000
+              endpoint: s3.amazonaws.com
+              bucket: "{{workflow.parameters.s3BucketName}}"
+              region: us-west-2
+              key: results/{{workflow.namespace}}/{{workflow.parameters.uniqueName}}/simulations/{{pod.name}}.tgz
+              accessKeySecret:
+                name: my-s3-credentials
+                key: accessKey
+              secretKeySecret:
+                name: my-s3-credentials
+                key: secretKey
+
+    - name: list
+      container:
+        image: "{{workflow.parameters.awscliGatmergeImg}}"
+        command: [sh, -c]
+        args: ["
+          cd /perf-in &&
+          ls -R &&
+          for a in `ls -1 *.tgz`; do
+              gzip -dc $a | tar xf -;
+          done &&
+          echo '=======' &&
+          ls -R /perf-in &&
+          cd /opt/gatling/bin &&
+          ./gatling.sh -ro /perf-in/simulations &&
+          mkdir /perf-out &&
+          cp -rf /perf-in/simulations /perf-out/simulations &&
+          rm $(find /perf-out/ -name '*.log') &&
+          ls -R /perf-out
+        "]
+        resources:        # limit the resources
+          requests:
+            memory: 1Gi
+            cpu: "1"
+          limits:
+            memory: 2Gi
+            cpu: "1"
+      metadata:
+        # annotations:
+        #   iam.amazonaws.com/role: "k8s-{{workflow.parameters.pfiNamespace}}"
+      inputs:
+        artifacts:
+          - name: inputsimulations
+            path: /perf-in
+            s3:
+              # Use the corresponding endpoint depending on your S3 provider:
+              #   AWS: s3.amazonaws.com
+              #   GCS: storage.googleapis.com
+              #   Minio: my-minio-endpoint.default:9000
+              endpoint: s3.amazonaws.com
+              bucket: "{{workflow.parameters.s3BucketName}}"
+              region: us-west-2
+              key: results/{{workflow.namespace}}/{{workflow.parameters.uniqueName}}/simulations/
+              accessKeySecret:
+                name: my-s3-credentials
+                key: accessKey
+              secretKeySecret:
+                name: my-s3-credentials
+                key: secretKey
+
+      outputs:
+        artifacts:
+          - name: finalResult
+            path: /perf-out
+            # It is possible to disable tar.gz archiving by setting the archive strategy to 'none'
+            # Disabling archiving has the following limitations on S3: symboloic links will not be
+            # uploaded, as S3 does not support the concept/file mode of symlinks.
+            # this will work on your local machine as well as any of ci system as result will be uploaded to S3
+            archive:
+              none: {}
+
+            s3:
+              # Use the corresponding endpoint depending on your S3 provider:
+              #   AWS: s3.amazonaws.com
+              #   GCS: storage.googleapis.com
+              #   Minio: my-minio-endpoint.default:9000
+              endpoint: s3.amazonaws.com
+              bucket: "{{workflow.parameters.s3BucketName}}"
+              region: us-west-2
+              key: results/{{workflow.namespace}}/{{workflow.parameters.uniqueName}}/finalResult/
+              accessKeySecret:
+                name: my-s3-credentials
+                key: accessKey
+              secretKeySecret:
+                name: my-s3-credentials
+                key: secretKey
+
+    - name: s3access
+      metadata:
+        annotations:
+          iam.amazonaws.com/role: "k8s-{{workflow.parameters.pfiNamespace}}"
+      container:
+        image:  "{{workflow.parameters.awscliGatmergeImg}}"
+        command: [sh, -c]
+        args: ["sleep 20 && aws s3 ls s3://{{workflow.parameters.s3BucketName}}/results/ && aws s3 cp --recursive --acl authenticated-read 's3://{{workflow.parameters.s3BucketName}}/results/{{workflow.namespace}}/{{workflow.parameters.uniqueName}}' 's3://{{workflow.parameters.s3BucketName}}/results/{{workflow.namespace}}/{{workflow.parameters.uniqueName}}'"]</code></pre></div>
+    </div>
+  </div>
+</div>
 </div>
 </div><div class="col-sm-3">
 <div class="shadow p-3 mb-5 bg-white rounded">
@@ -56,7 +451,91 @@ To do so, it requires the address of the Argo CD server and some form of authent
     <p class="text-muted">By <a href="https://github.com/@alexec">@alexec</a> <span class="badge badge-light">>= 2.9.0</span></p>
     <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Checkout out from Git, build and test a Golang application.</p>
 	<p><span class="badge badge-secondary"> git</span><span class="badge badge-secondary">golang</span></p>
-    <div class="right-pull"><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/go-build/manifests.yaml" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></div>
+    <div><button type="button" class="btn btn-light" data-toggle="modal" data-target="#go-buildModal">Get <i class="fa fa-angle-right"></i></button></div>
+<div class="modal" id="go-buildModal" tabindex="-1" aria-labelledby="go-buildLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="go-buildLabel"><i class='fa fa-sitemap'></i> go-build</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">Checkout out from Git, build and test a Golang application.</div>
+      <div class="modal-body"><pre><code>kubectl apply -f https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/go-build/manifests.yaml</code></pre></div>
+      <div class="modal-body"><pre><code>apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  annotations:
+    workflows.argoproj.io/description: |
+      Checkout out from Git, build and test a Golang application.
+    workflows.argoproj.io/maintainer: '@alexec'
+    workflows.argoproj.io/tags: golang, git
+    workflows.argoproj.io/version: '>= 2.9.0'
+  name: go-build
+spec:
+  entrypoint: main
+  arguments:
+    parameters:
+      - name: repo
+        value: https://github.com/argoproj-labs/argo-workflows-catalog.git
+      - name: branch
+        value: master
+      - name: output
+        value: argo-workflows-catalog
+  templates:
+    - name: main
+      steps:
+        - - name: checkout
+            template: checkout
+        - - name: build
+            template: build
+        - - name: test
+            template: test
+    - name: checkout
+      script:
+        image: golang:1.14
+        workingDir: /work
+        args:
+          - sh
+        # use --depth 1 and --single-branch for fastest possible checkout
+        source: git clone --depth 1 --single-branch --branch {{workflow.parameters.branch}} {{workflow.parameters.repo}} .
+        volumeMounts:
+          - mountPath: /work
+            name: work
+    - name: build
+      script:
+        image: golang:1.14
+        workingDir: /work
+        args:
+          - sh
+        source: go build -o {{workflow.parameters.output}} -v ./...
+        volumeMounts:
+          - mountPath: /work
+            name: work
+    - name: test
+      script:
+        image: golang:1.14
+        workingDir: /work
+        args:
+          - sh
+        source: go test -v ./...
+        volumeMounts:
+          - mountPath: /work
+            name: work
+  volumeClaimTemplates:
+    # A shared work volume.
+    - name: work
+      metadata:
+        name: work
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 64Mi</code></pre></div>
+    </div>
+  </div>
+</div>
 </div>
 </div><div class="col-sm-3">
 <div class="shadow p-3 mb-5 bg-white rounded">
@@ -64,7 +543,44 @@ To do so, it requires the address of the Argo CD server and some form of authent
     <p class="text-muted">By <a href="https://github.com/@alexec">@alexec</a> <span class="badge badge-light">>= 2.9.0</span></p>
     <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">This is a basic catalog example that simply prints "hello argo!".</p>
 	<p><span class="badge badge-secondary">example</span></p>
-    <div class="right-pull"><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/hello-world/manifests.yaml" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></div>
+    <div><button type="button" class="btn btn-light" data-toggle="modal" data-target="#hello-worldModal">Get <i class="fa fa-angle-right"></i></button></div>
+<div class="modal" id="hello-worldModal" tabindex="-1" aria-labelledby="hello-worldLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="hello-worldLabel"><i class='fa fa-sitemap'></i> hello-world</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">This is a basic catalog example that simply prints "hello argo!".</div>
+      <div class="modal-body"><pre><code>kubectl apply -f https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/hello-world/manifests.yaml</code></pre></div>
+      <div class="modal-body"><pre><code>apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  annotations:
+    workflows.argoproj.io/description: This is a basic catalog example that simply
+      prints "hello argo!".
+    workflows.argoproj.io/maintainer: '@alexec'
+    workflows.argoproj.io/tags: example
+    workflows.argoproj.io/version: '>= 2.9.0'
+  name: hello-world
+spec:
+  entrypoint: argosay
+  templates:
+  - container:
+      args:
+      - echo
+      - hello argo!
+      command:
+      - /argosay
+      image: argoproj/argosay:v2
+      name: main
+    name: argosay
+</code></pre></div>
+    </div>
+  </div>
+</div>
 </div>
 </div><div class="col-sm-3">
 <div class="shadow p-3 mb-5 bg-white rounded">
@@ -73,7 +589,71 @@ To do so, it requires the address of the Argo CD server and some form of authent
     <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">This is a workflow template that allows you to run a Jenkinsfile pipeline in a
 container by using the `jenkins/jenkinsfile-runner` image.</p>
 	<p><span class="badge badge-secondary">ci</span><span class="badge badge-secondary">jenkins</span></p>
-    <div class="right-pull"><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/jenkins-pipeline/manifests.yaml" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></div>
+    <div><button type="button" class="btn btn-light" data-toggle="modal" data-target="#jenkins-pipelineModal">Get <i class="fa fa-angle-right"></i></button></div>
+<div class="modal" id="jenkins-pipelineModal" tabindex="-1" aria-labelledby="jenkins-pipelineLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="jenkins-pipelineLabel"><i class='fa fa-sitemap'></i> jenkins-pipeline</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">This is a workflow template that allows you to run a Jenkinsfile pipeline in a
+container by using the `jenkins/jenkinsfile-runner` image.</div>
+      <div class="modal-body"><pre><code>kubectl apply -f https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/jenkins-pipeline/manifests.yaml</code></pre></div>
+      <div class="modal-body"><pre><code># Jenkins icon https://jenkins.io/
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  annotations:
+    workflows.argoproj.io/description: |
+      This is a workflow template that allows you to run a Jenkinsfile pipeline in a
+      container by using the `jenkins/jenkinsfile-runner` image.
+    workflows.argoproj.io/maintainer: '@dcherman'
+    workflows.argoproj.io/tags: jenkins,ci
+    workflows.argoproj.io/version: '>= 2.9.0'
+  name: jenkins-pipeline
+spec:
+  entrypoint: run-jenkins-pipeline
+  templates:
+  - name: run-jenkins-pipeline
+    inputs:
+      artifacts:
+        - name: jenkinsfile
+          path: /pipeline/jenkinsfile
+        - name: plugins
+          path: /pipeline/plugins.txt
+          optional: true
+      parameters:
+      - name: image
+        value: jenkins/jenkinsfile-runner
+      - name: build-number
+        value: 1
+      - name: cause
+        value: "argo-workflow"
+      - name: job-name
+        value: "job"
+    script:
+      image: "{{inputs.parameters.image}}"
+      command: [bash]
+      source: |
+        set -euox pipefail
+
+        ARGS=(--file="/pipeline/jenkinsfile")
+        ARGS+=(--build-number="{{inputs.parameters.build-number}}")
+        ARGS+=(--cause="{{inputs.parameters.cause}}")
+        ARGS+=(--job-name="{{inputs.parameters.job-name}}")
+
+        if [[ -f /pipeline/plugins.txt ]]; then
+          ARGS+=(--plugins="/pipeline/plugins.txt")
+        fi
+
+        /app/bin/jenkinsfile-runner-launcher "${ARGS[@]}"
+</code></pre></div>
+    </div>
+  </div>
+</div>
 </div>
 </div><div class="col-sm-3">
 <div class="shadow p-3 mb-5 bg-white rounded">
@@ -81,7 +661,101 @@ container by using the `jenkins/jenkinsfile-runner` image.</p>
     <p class="text-muted">By <a href="https://github.com/@dcherman">@dcherman</a> <span class="badge badge-light">>= 2.9.0</span></p>
     <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">This task sends a simple email to receivers via SMTP server.</p>
 	<p><span class="badge badge-secondary">email</span><span class="badge badge-secondary">sendmail</span><span class="badge badge-secondary">smtp</span></p>
-    <div class="right-pull"><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/sendmail/manifests.yaml" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></div>
+    <div><button type="button" class="btn btn-light" data-toggle="modal" data-target="#sendmailModal">Get <i class="fa fa-angle-right"></i></button></div>
+<div class="modal" id="sendmailModal" tabindex="-1" aria-labelledby="sendmailLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="sendmailLabel"><i class='fa fa-sitemap'></i> sendmail</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">This task sends a simple email to receivers via SMTP server.</div>
+      <div class="modal-body"><pre><code>kubectl apply -f https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/sendmail/manifests.yaml</code></pre></div>
+      <div class="modal-body"><pre><code>  
+# Credit for this implementation goes to @dlorenc based on the same task in the Tekton Catalog
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  annotations:
+    workflows.argoproj.io/description: This task sends a simple email to receivers via SMTP server.
+    workflows.argoproj.io/maintainer: '@dcherman'
+    workflows.argoproj.io/tags: sendmail,smtp,email
+    workflows.argoproj.io/version: '>= 2.9.0'
+  name: sendmail
+spec:
+  entrypoint: sendmail
+  templates:
+  - name: sendmail
+    inputs:
+      parameters:
+        - name: sender
+        - name: body
+        - name: subject
+        - name: recipients
+        - name: smtp-secret
+    script:
+      image: python:3.8-alpine
+      command: [python]
+      env:
+        - name: USER
+          valueFrom:
+            secretKeyRef:
+              name: "{{inputs.parameters.smtp-secret}}"
+              key: user
+        - name: PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: "{{inputs.parameters.smtp-secret}}"
+              key: password
+        - name: TLS
+          valueFrom:
+            secretKeyRef:
+              name: "{{inputs.parameters.smtp-secret}}"
+              key: tls
+        - name: SERVER
+          valueFrom:
+            secretKeyRef:
+              name: "{{inputs.parameters.smtp-secret}}"
+              key: url
+        - name: PORT
+          valueFrom:
+            secretKeyRef:
+              name: "{{inputs.parameters.smtp-secret}}"
+              key: port
+      source: |
+        import smtplib, ssl, os
+        
+        port = os.getenv('PORT')
+        smtp_server = os.getenv('SERVER')
+        sender_email = "{{inputs.parameters.sender}}"
+        receiver_emails = "{{inputs.parameters.recipients}}"
+        user = os.getenv('USER')
+        password = os.getenv('PASSWORD')
+        tls = os.getenv('TLS')
+        message = f"""\
+        Subject: {{inputs.parameters.subject}}
+        To: {receiver_emails}
+        From: {sender_email}
+
+        {{inputs.parameters.body}}"""
+
+        print(message)
+        if tls == 'True':
+            context = ssl.create_default_context()
+            server = smtplib.SMTP_SSL(smtp_server, port, context=context)
+        else:
+            server = smtplib.SMTP(smtp_server, port)
+        if password != '':
+            server.login(user, password)
+        for receiver in receiver_emails.split(' '):
+            server.sendmail(sender_email, receiver, message)
+        server.quit()
+</code></pre></div>
+    </div>
+  </div>
+</div>
 </div>
 </div><div class="col-sm-3">
 <div class="shadow p-3 mb-5 bg-white rounded">
@@ -89,7 +763,100 @@ container by using the `jenkins/jenkinsfile-runner` image.</p>
     <p class="text-muted">By <a href="https://github.com/@descrepes">@descrepes</a> <span class="badge badge-light">>= 2.9.0</span></p>
     <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">this workflow template contains a template to make simple notifications and a template to upload a file with a header and a footer.</p>
 	<p><span class="badge badge-secondary">slack</span></p>
-    <div class="right-pull"><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/slack/manifests.yaml" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></div>
+    <div><button type="button" class="btn btn-light" data-toggle="modal" data-target="#slackModal">Get <i class="fa fa-angle-right"></i></button></div>
+<div class="modal" id="slackModal" tabindex="-1" aria-labelledby="slackLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="slackLabel"><i class='fa fa-sitemap'></i> slack</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">this workflow template contains a template to make simple notifications and a template to upload a file with a header and a footer.</div>
+      <div class="modal-body"><pre><code>kubectl apply -f https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/slack/manifests.yaml</code></pre></div>
+      <div class="modal-body"><pre><code>apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  annotations:
+    workflows.argoproj.io/description: >-
+      this workflow template contains a template to make simple notifications and a template to upload a file with a header and a footer.
+    workflows.argoproj.io/maintainer: '@descrepes'
+    workflows.argoproj.io/tags: slack
+    workflows.argoproj.io/version: '>= 2.9.0'
+  name: slack
+spec:
+  templates:
+    - name: notify
+      inputs:
+        parameters:
+          - name: channel
+          - name: message
+          - name: color
+          - name: slack-secret
+      script:
+        imagePullPolicy: "Always"
+        image: descrepes/slack-cli:latest
+        env:
+          - name: SLACK_CHANNEL
+            value: "{{inputs.parameters.channel}}"
+          - name: SLACK_MESSAGE
+            value: "{{inputs.parameters.message}}"
+          - name: SLACK_COLOR
+            value: "{{inputs.parameters.color}}"
+          - name: SLACK_WEBHOOK
+            valueFrom:
+              secretKeyRef:
+                name: "{{inputs.parameters.slack-secret}}"
+                key: webhook
+        command: ["sh"]
+        source: |
+          slack-notify
+
+
+    - name: file
+      inputs:
+        artifacts:
+          - name: file
+            path: /home/log
+            mode: 0755
+        parameters:
+          - name: header
+            default: ""
+          - name: footer
+            default: ""
+          - name: team
+          - name: channel
+          - name: color
+            default: "3399FF"
+          - name: slack-secret
+      script:
+        imagePullPolicy: "Always"
+        image: descrepes/slack-cli:latest
+        env:
+          - name: SLACK_CHANNEL
+            value: "{{inputs.parameters.channel}}"
+          - name: SLACK_COLOR
+            value: "{{inputs.parameters.color}}"
+          - name: SLACK_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: "{{inputs.parameters.slack-secret}}"
+                key: token
+          - name: SLACK_WEBHOOK
+            valueFrom:
+              secretKeyRef:
+                name: "{{inputs.parameters.slack-secret}}"
+                key: webhook
+        command: ["sh"]
+        source: |
+          if [ ! -z "{{inputs.parameters.header}}" ]; then SLACK_MESSAGE="{{inputs.parameters.header}}" slack-notify; fi
+          slack-cli -d {{inputs.parameters.channel}} -T {{inputs.parameters.team}} -f /home/log
+          if [ ! -SLACK_WEBHOOKz "{{inputs.parameters.footer}}" ]; then SLACK_MESSAGE="{{inputs.parameters.footer}}" slack-notify; fi
+</code></pre></div>
+    </div>
+  </div>
+</div>
 </div>
 </div><div class="col-sm-3">
 <div class="shadow p-3 mb-5 bg-white rounded">
@@ -97,10 +864,109 @@ container by using the `jenkins/jenkinsfile-runner` image.</p>
     <p class="text-muted">By <a href="https://github.com/@descrepes">@descrepes</a> <span class="badge badge-light">>= 2.9.0</span></p>
     <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">This workflow run a basic Terraform plan.</p>
 	<p><span class="badge badge-secondary">terraform</span></p>
-    <div class="right-pull"><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/terraform-basic/manifests.yaml" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></div>
+    <div><button type="button" class="btn btn-light" data-toggle="modal" data-target="#terraform-basicModal">Get <i class="fa fa-angle-right"></i></button></div>
+<div class="modal" id="terraform-basicModal" tabindex="-1" aria-labelledby="terraform-basicLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="terraform-basicLabel"><i class='fa fa-sitemap'></i> terraform-basic</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">This workflow run a basic Terraform plan.</div>
+      <div class="modal-body"><pre><code>kubectl apply -f https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/terraform-basic/manifests.yaml</code></pre></div>
+      <div class="modal-body"><pre><code>apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  annotations:
+    workflows.argoproj.io/description: This workflow run a basic Terraform plan.
+    workflows.argoproj.io/maintainer: '@descrepes'
+    workflows.argoproj.io/tags: terraform
+    workflows.argoproj.io/version: '>= 2.9.0'
+  name: terraform-basic
+spec:
+  entrypoint: update
+  arguments:
+    parameters:
+    - name: terraform-docker-image
+      value: "descrepes/terraform:0.12.9-demo"
+    - name: terraform-script-repository
+      value: "https://github.com/descrepes/terraform-argo-vmpool-demo.git"
+  templates:
+    - name: plan
+      inputs:
+        artifacts:
+        - name: terraform
+          path: /home/terraform
+          git:
+            repo: "{{workflow.parameters.terraform-script-repository}}"
+            depth: 1
+      script:
+        imagePullPolicy: "Always"
+        image: "{{workflow.parameters.terraform-docker-image}}"
+        command: ["sh"]
+        source: |
+          cp /home/terraform/*.tf /home/argo/
+
+          /bin/terraform init -input=false /home/argo
+          /bin/terraform plan -parallelism=2 -input=false -no-color -out=/home/argo/tfclientsplan /home/argo >> /tmp/terraform-change.log
+      outputs:
+        artifacts:
+          - name: terraform-plan
+            path: /home/argo/
+            archive:
+              none: {}
+          - name: terraform-log
+            path: /tmp/terraform-change.log
+            archive:
+              none: {}
+
+    - name: apply
+      inputs:
+        artifacts:
+        - name: terraform-plan
+          path: /home/terraform
+      script:
+        imagePullPolicy: "Always"
+        image: "{{workflow.parameters.terraform-docker-image}}"
+        command: ["sh"]
+        source: |
+          /bin/terraform apply -input=false -parallelism=2 -no-color /home/terraform/tfclientsplan
+
+    - name: approve
+      suspend: {}
+
+    - name: update
+      dag:
+        tasks:
+          - name: plan
+            template: plan
+            outputs:
+              artifacts:
+                - name: terraform-plan
+                  path: /home/argo/
+          - name: approve
+            dependencies: [plan]
+            template: approve
+          - name: apply
+            template: apply
+            dependencies: [plan, approve]
+            arguments:
+              artifacts:
+              - name: terraform-plan
+                from: "{{tasks.plan.outputs.artifacts.terraform-plan}}"
+
+
+</code></pre></div>
+    </div>
+  </div>
+</div>
 </div>
 </div>
       </div>
     </div>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns" crossorigin="anonymous"></script>
   </body>
 </html>
