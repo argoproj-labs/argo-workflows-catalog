@@ -56,14 +56,13 @@ func main() {
 			panic("invalid maintainer, must be Github username starting with \"@\": " + maintainer)
 		}
 		url := "https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/" + filename
-		cards = append(cards, `<div class="card box-shadow">
-  <img class="card-img-top" src="`+name+`/icon.png" alt="Icon">
-  <div class="card-body">
-    <h3 class="card-title">`+name+`</h3>
-    <p class="card-subtitle text-muted">By <a href="https://github.com/`+strings.TrimSuffix(maintainer, "@")+`">`+maintainer+`</a> <span class="badge badge-light">`+version+`</span></p>
-    <p class="card-text">`+description+`</p>
-    <p class="card-text"><a href="`+url+`" class='btn btn-light'>Get</a></p>
-  </div>
+		cards = append(cards, `<div class="col-sm-3">
+<div class="shadow p-3 mb-5 bg-white rounded">
+    <h3><i class='fa fa-sitemap'></i> `+name+`</h3>
+    <p class="text-muted">By <a href="https://github.com/`+strings.TrimSuffix(maintainer, "@")+`">`+maintainer+`</a> <span class="badge badge-light">`+version+`</span></p>
+    <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">`+description+`</p>
+    <p><a href="`+url+`" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></p>
+</div>
 </div>`)
 
 		icon, err := os.Open("templates/" + name + "/icon.png")
@@ -121,24 +120,22 @@ func main() {
     <title>Argo Workflows Catalog</title>
   </head>
   <body>
-    <div class="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
-      <h1 class="display-4">
-        Template Catalog
-      </h1>
-      <p class="lead">Free reusable templates for Argo Workflows.</p>
-      <p><a href="https://github.com/argoproj-labs/argo-workflows-catalog/blob/master/README.md" class='btn btn-light'>How to contribute</a></p>
-    </div>
-    <div class="container">
-      <div class="card-columns">
+	<nav class="navbar bg-dark">
+	  <div class="container-fluid">
+		<a class="navbar-brand" style="color:white">
+			<i class="fa fa-bookmark"></i>
+			<b>Template Catalog</b>: Free reusable templates for Argo Workflows.
+		</a>
+		<div class="d-flex">
+			<a href="https://github.com/argoproj-labs/argo-workflows-catalog/blob/master/README.md" class='btn btn-light'>Contribute <i class="fa fa-angle-right"></i></a>
+		</div>
+	  </div>
+	</nav>
+    <div class="container p-5">
+      <div class="row">
         `+strings.Join(cards, "")+`
       </div>
     </div>
-
-    <!-- Optional JavaScript -->
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
   </body>
 </html>`), 0644)
 	if err != nil {

@@ -12,97 +12,86 @@
     <title>Argo Workflows Catalog</title>
   </head>
   <body>
-    <div class="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
-      <h1 class="display-4">
-        Template Catalog
-      </h1>
-      <p class="lead">Free reusable templates for Argo Workflows.</p>
-      <p><a href="https://github.com/argoproj-labs/argo-workflows-catalog/blob/master/README.md" class='btn btn-light'>How to contribute</a></p>
-    </div>
-    <div class="container">
-      <div class="card-columns">
-        <div class="card box-shadow">
-  <img class="card-img-top" src="argocd-sync-and-wait/icon.png" alt="Icon">
-  <div class="card-body">
-    <h3 class="card-title">argocd-sync-and-wait</h3>
-    <p class="card-subtitle text-muted">By <a href="https://github.com/@dcherman">@dcherman</a> <span class="badge badge-light">>= 2.9.0</span></p>
-    <p class="card-text">This task syncs (deploys) an Argo CD application and waits for it to be healthy.
+	<nav class="navbar bg-dark">
+	  <div class="container-fluid">
+		<a class="navbar-brand" style="color:white">
+			<i class="fa fa-bookmark"></i>
+			<b>Template Catalog</b>: Free reusable templates for Argo Workflows.
+		</a>
+		<div class="d-flex">
+			<a href="https://github.com/argoproj-labs/argo-workflows-catalog/blob/master/README.md" class='btn btn-light'>Contribute <i class="fa fa-angle-right"></i></a>
+		</div>
+	  </div>
+	</nav>
+    <div class="container p-5">
+      <div class="row">
+        <div class="col-sm-3">
+<div class="shadow p-3 mb-5 bg-white rounded">
+    <h3><i class='fa fa-sitemap'></i> argocd-sync-and-wait</h3>
+    <p class="text-muted">By <a href="https://github.com/@dcherman">@dcherman</a> <span class="badge badge-light">>= 2.9.0</span></p>
+    <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">This task syncs (deploys) an Argo CD application and waits for it to be healthy.
 To do so, it requires the address of the Argo CD server and some form of authentication either a username/password or an authentication token.</p>
-    <p class="card-text"><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/argocd-sync-and-wait/manifests.yaml" class='btn btn-light'>Get</a></p>
-  </div>
-</div><div class="card box-shadow">
-  <img class="card-img-top" src="buildkit/icon.png" alt="Icon">
-  <div class="card-body">
-    <h3 class="card-title">buildkit</h3>
-    <p class="card-subtitle text-muted">By <a href="https://github.com/@alexec">@alexec</a> <span class="badge badge-light">>= 2.9.0</span></p>
-    <p class="card-text">Build and push an image using Docker Buildkit. This does not need privileged access, unlike Docker in Docker (DIND).</p>
-    <p class="card-text"><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/buildkit/manifests.yaml" class='btn btn-light'>Get</a></p>
-  </div>
-</div><div class="card box-shadow">
-  <img class="card-img-top" src="distro/icon.png" alt="Icon">
-  <div class="card-body">
-    <h3 class="card-title">distro</h3>
-    <p class="card-subtitle text-muted">By <a href="https://github.com/@sumitnagal">@sumitnagal</a> <span class="badge badge-light">>= 2.9.0</span></p>
-    <p class="card-text">this workflow template contains a template to make simple test-container executed via argo.</p>
-    <p class="card-text"><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/distro/manifests.yaml" class='btn btn-light'>Get</a></p>
-  </div>
-</div><div class="card box-shadow">
-  <img class="card-img-top" src="go-build/icon.png" alt="Icon">
-  <div class="card-body">
-    <h3 class="card-title">go-build</h3>
-    <p class="card-subtitle text-muted">By <a href="https://github.com/@alexec">@alexec</a> <span class="badge badge-light">>= 2.9.0</span></p>
-    <p class="card-text">Checkout out from Git, build and test a Golang application.</p>
-    <p class="card-text"><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/go-build/manifests.yaml" class='btn btn-light'>Get</a></p>
-  </div>
-</div><div class="card box-shadow">
-  <img class="card-img-top" src="hello-world/icon.png" alt="Icon">
-  <div class="card-body">
-    <h3 class="card-title">hello-world</h3>
-    <p class="card-subtitle text-muted">By <a href="https://github.com/@alexec">@alexec</a> <span class="badge badge-light">>= 2.9.0</span></p>
-    <p class="card-text">This is a basic catalog example that simply prints "hello argo!".</p>
-    <p class="card-text"><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/hello-world/manifests.yaml" class='btn btn-light'>Get</a></p>
-  </div>
-</div><div class="card box-shadow">
-  <img class="card-img-top" src="jenkins-pipeline/icon.png" alt="Icon">
-  <div class="card-body">
-    <h3 class="card-title">jenkins-pipeline</h3>
-    <p class="card-subtitle text-muted">By <a href="https://github.com/@dcherman">@dcherman</a> <span class="badge badge-light">>= 2.9.0</span></p>
-    <p class="card-text">This is a workflow template that allows you to run a Jenkinsfile pipeline in a
+    <p><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/argocd-sync-and-wait/manifests.yaml" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></p>
+</div>
+</div><div class="col-sm-3">
+<div class="shadow p-3 mb-5 bg-white rounded">
+    <h3><i class='fa fa-sitemap'></i> buildkit</h3>
+    <p class="text-muted">By <a href="https://github.com/@alexec">@alexec</a> <span class="badge badge-light">>= 2.9.0</span></p>
+    <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Build and push an image using Docker Buildkit. This does not need privileged access, unlike Docker in Docker (DIND).</p>
+    <p><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/buildkit/manifests.yaml" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></p>
+</div>
+</div><div class="col-sm-3">
+<div class="shadow p-3 mb-5 bg-white rounded">
+    <h3><i class='fa fa-sitemap'></i> distro</h3>
+    <p class="text-muted">By <a href="https://github.com/@sumitnagal">@sumitnagal</a> <span class="badge badge-light">>= 2.9.0</span></p>
+    <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">This workflow template contains a template to make simple test-container executed via Argo.</p>
+    <p><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/distro/manifests.yaml" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></p>
+</div>
+</div><div class="col-sm-3">
+<div class="shadow p-3 mb-5 bg-white rounded">
+    <h3><i class='fa fa-sitemap'></i> go-build</h3>
+    <p class="text-muted">By <a href="https://github.com/@alexec">@alexec</a> <span class="badge badge-light">>= 2.9.0</span></p>
+    <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Checkout out from Git, build and test a Golang application.</p>
+    <p><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/go-build/manifests.yaml" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></p>
+</div>
+</div><div class="col-sm-3">
+<div class="shadow p-3 mb-5 bg-white rounded">
+    <h3><i class='fa fa-sitemap'></i> hello-world</h3>
+    <p class="text-muted">By <a href="https://github.com/@alexec">@alexec</a> <span class="badge badge-light">>= 2.9.0</span></p>
+    <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">This is a basic catalog example that simply prints "hello argo!".</p>
+    <p><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/hello-world/manifests.yaml" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></p>
+</div>
+</div><div class="col-sm-3">
+<div class="shadow p-3 mb-5 bg-white rounded">
+    <h3><i class='fa fa-sitemap'></i> jenkins-pipeline</h3>
+    <p class="text-muted">By <a href="https://github.com/@dcherman">@dcherman</a> <span class="badge badge-light">>= 2.9.0</span></p>
+    <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">This is a workflow template that allows you to run a Jenkinsfile pipeline in a
 container by using the `jenkins/jenkinsfile-runner` image.</p>
-    <p class="card-text"><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/jenkins-pipeline/manifests.yaml" class='btn btn-light'>Get</a></p>
-  </div>
-</div><div class="card box-shadow">
-  <img class="card-img-top" src="sendmail/icon.png" alt="Icon">
-  <div class="card-body">
-    <h3 class="card-title">sendmail</h3>
-    <p class="card-subtitle text-muted">By <a href="https://github.com/@dcherman">@dcherman</a> <span class="badge badge-light">>= 2.9.0</span></p>
-    <p class="card-text">This task sends a simple email to receivers via SMTP server.</p>
-    <p class="card-text"><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/sendmail/manifests.yaml" class='btn btn-light'>Get</a></p>
-  </div>
-</div><div class="card box-shadow">
-  <img class="card-img-top" src="slack/icon.png" alt="Icon">
-  <div class="card-body">
-    <h3 class="card-title">slack</h3>
-    <p class="card-subtitle text-muted">By <a href="https://github.com/@descrepes">@descrepes</a> <span class="badge badge-light">>= 2.9.0</span></p>
-    <p class="card-text">this workflow template contains a template to make simple notifications and a template to upload a file with a header and a footer.</p>
-    <p class="card-text"><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/slack/manifests.yaml" class='btn btn-light'>Get</a></p>
-  </div>
-</div><div class="card box-shadow">
-  <img class="card-img-top" src="terraform-basic/icon.png" alt="Icon">
-  <div class="card-body">
-    <h3 class="card-title">terraform-basic</h3>
-    <p class="card-subtitle text-muted">By <a href="https://github.com/@descrepes">@descrepes</a> <span class="badge badge-light">>= 2.9.0</span></p>
-    <p class="card-text">This workflow run a basic Terraform plan.</p>
-    <p class="card-text"><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/terraform-basic/manifests.yaml" class='btn btn-light'>Get</a></p>
-  </div>
+    <p><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/jenkins-pipeline/manifests.yaml" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></p>
+</div>
+</div><div class="col-sm-3">
+<div class="shadow p-3 mb-5 bg-white rounded">
+    <h3><i class='fa fa-sitemap'></i> sendmail</h3>
+    <p class="text-muted">By <a href="https://github.com/@dcherman">@dcherman</a> <span class="badge badge-light">>= 2.9.0</span></p>
+    <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">This task sends a simple email to receivers via SMTP server.</p>
+    <p><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/sendmail/manifests.yaml" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></p>
+</div>
+</div><div class="col-sm-3">
+<div class="shadow p-3 mb-5 bg-white rounded">
+    <h3><i class='fa fa-sitemap'></i> slack</h3>
+    <p class="text-muted">By <a href="https://github.com/@descrepes">@descrepes</a> <span class="badge badge-light">>= 2.9.0</span></p>
+    <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">this workflow template contains a template to make simple notifications and a template to upload a file with a header and a footer.</p>
+    <p><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/slack/manifests.yaml" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></p>
+</div>
+</div><div class="col-sm-3">
+<div class="shadow p-3 mb-5 bg-white rounded">
+    <h3><i class='fa fa-sitemap'></i> terraform-basic</h3>
+    <p class="text-muted">By <a href="https://github.com/@descrepes">@descrepes</a> <span class="badge badge-light">>= 2.9.0</span></p>
+    <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">This workflow run a basic Terraform plan.</p>
+    <p><a href="https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/terraform-basic/manifests.yaml" class='btn btn-light'>Get <i class="fa fa-angle-right"></i></a></p>
+</div>
 </div>
       </div>
     </div>
-
-    <!-- Optional JavaScript -->
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
   </body>
 </html>

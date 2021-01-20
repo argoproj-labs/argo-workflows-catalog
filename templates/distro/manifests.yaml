@@ -3,7 +3,7 @@ kind: WorkflowTemplate
 metadata:
   annotations:
     workflows.argoproj.io/description: >-
-      this workflow template contains a template to make simple test-container executed via argo.
+      This workflow template contains a template to make simple test-container executed via Argo.
     workflows.argoproj.io/maintainer: '@sumitnagal'
     workflows.argoproj.io/tags: distro
     workflows.argoproj.io/version: '>= 2.9.0'
