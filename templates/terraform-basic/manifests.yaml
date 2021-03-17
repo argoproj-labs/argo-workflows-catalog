@@ -64,10 +64,6 @@ spec:
         tasks:
           - name: plan
             template: plan
-            outputs:
-              artifacts:
-                - name: terraform-plan
-                  path: /home/argo/
           - name: approve
             dependencies: [plan]
             template: approve
