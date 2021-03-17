@@ -703,6 +703,7 @@ spec:
           - name: postgres_database
           - name: s3_endpoint
           - name: s3_bucket
+          - name: s3_prefix
       container:
         image: schickling/postgres-backup-s3
         env:
@@ -744,6 +745,7 @@ spec:
           - name: postgres_database
           - name: s3_endpoint
           - name: s3_bucket
+          - name: s3_prefix
       container:
         image: schickling/postgres-restore-s3
         env:
