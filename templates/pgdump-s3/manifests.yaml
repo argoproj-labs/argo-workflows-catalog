@@ -1,0 +1,107 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  annotations:
+    workflows.argoproj.io/description: Dump/Restore a PostgreSQL database to/from S3.
+    workflows.argoproj.io/maintainer: '@descrepes'
+    workflows.argoproj.io/tags: postgresql
+    workflows.argoproj.io/version: '>= 2.9.0'
+  name: pgdump-s3
+spec:
+  arguments:
+    parameters:
+      - name: postgres_host
+        value: myhost
+      - name: postgres_database
+        value: mydb
+      - name: s3_endpoint
+        value: s3.eu-central-1.amazonaws.com
+      - name: s3_bucket
+        value: postgres
+      - name: s3_prefix
+        value: "YYYY/MM/DD"
+  templates:
+    - name: backup
+      inputs:
+        parameters:
+          - name: postgres_host
+          - name: postgres_database
+          - name: s3_endpoint
+          - name: s3_bucket
+          - name: s3_prefix
+      container:
+        image: schickling/postgres-backup-s3
+        env:
+        - name: S3_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: mysecret
+              key: s3_access_key
+        - name: S3_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mysecret
+              key: s3_secret_access_key
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysecret
+              key: password
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: mysecret
+              key: username
+        - name: POSTGRES_HOST
+          value: "{{inputs.parameters.postgres_host}}"
+        - name: POSTGRES_DATABASE
+          value: "{{inputs.parameters.postgres_database}}"
+        - name: S3_ENDPOINT
+          value: "{{inputs.parameters.s3_endpoint}}"
+        - name: S3_BUCKET
+          value: "{{inputs.parameters.s3_bucket}}"
+        - name: S3_PREFIX
+          value: "{{inputs.parameters.s3_prefix}}"
+
+    - name: restore
+      inputs:
+        parameters:
+          - name: postgres_host
+          - name: postgres_database
+          - name: s3_endpoint
+          - name: s3_bucket
+          - name: s3_prefix
+      container:
+        image: schickling/postgres-restore-s3
+        env:
+        - name: S3_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: mysecret
+              key: s3_access_key
+        - name: S3_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mysecret
+              key: s3_secret_access_key
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysecret
+              key: password
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: mysecret
+              key: username
+        - name: POSTGRES_HOST
+          value: "{{inputs.parameters.postgres_host}}"
+        - name: POSTGRES_DATABASE
+          value: "{{inputs.parameters.postgres_database}}"
+        - name: S3_ENDPOINT
+          value: "{{inputs.parameters.s3_endpoint}}"
+        - name: S3_BUCKET
+          value: "{{inputs.parameters.s3_bucket}}"
+        - name: S3_PREFIX
+          value: "{{inputs.parameters.s3_prefix}}"
+
