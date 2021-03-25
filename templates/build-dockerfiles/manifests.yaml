@@ -1,0 +1,214 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: build-dockerfiles
+  namespace: argo-events
+  labels:
+    workflows.argoproj.io/description: |-
+      Builds Dockerfiles using either Docker-in-Docker, Kaniku, Makisu, or
+      Makisu-Alpine
+    workflows.argoproj.io/maintainer: meadows.120@buckeyemail.osu.edu
+    workflows.argoproj.io/tags: docker
+    workflows.argoproj.io/version: '>= 2.9.0'
+spec:
+  templates:
+    - name: build-using-provider
+      inputs:
+        parameters:
+        - name: dockerfile-to-build
+        - name: dockerfile-context
+        - name: dockerfile-tag
+        - name: project-shorthand
+        - name: git-clone-artifact-path
+        - name: redis-cache-address
+        - name: provider
+          value: "dockerInDocker"
+        artifacts:
+        - name: git-repo
+      steps:
+        - - name: makisu-alpine
+            template: makisu-alpine
+            when: "{{inputs.parameters.provider}} == makisuAlpine"
+            arguments:
+              parameters:
+              - name: dockerfile-to-build
+                value: "{{inputs.parameters.dockerfile-to-build}}"
+              - name: dockerfile-context
+                value: "{{inputs.parameters.dockerfile-context}}"
+              - name: dockerfile-tag
+                value: "{{inputs.parameters.dockerfile-tag}}"
+              - name: project-shorthand
+                value: "{{inputs.parameters.project-shorthand}}"
+              artifacts:
+              - name: git-repo
+                from: "{{inputs.artifacts.git-repo}}"
+          - name: makisu
+            template: makisu
+            when: "{{inputs.parameters.provider}} == makisu"
+            arguments:
+              parameters:
+              - name: dockerfile-to-build
+                value: "{{inputs.parameters.dockerfile-to-build}}"
+              - name: dockerfile-context
+                value: "{{inputs.parameters.dockerfile-context}}"
+              - name: dockerfile-tag
+                value: "{{inputs.parameters.dockerfile-tag}}"
+              artifacts:
+              - name: git-repo
+                from: "{{inputs.artifacts.git-repo}}"
+          - name: kaniko
+            template: kaniko
+            when: "{{inputs.parameters.provider}} == kaniko"
+            arguments:
+              parameters:
+              - name: dockerfile-to-build
+                value: "{{inputs.parameters.dockerfile-to-build}}"
+              - name: dockerfile-context
+                value: "{{inputs.parameters.dockerfile-context}}"
+              - name: dockerfile-tag
+                value: "{{inputs.parameters.dockerfile-tag}}"
+              artifacts:
+              - name: git-repo
+                from: "{{inputs.artifacts.git-repo}}"
+          - name: docker-in-docker
+            template: docker-in-docker
+            when: "{{inputs.parameters.provider}} == dockerInDocker"
+            arguments:
+              parameters:
+              - name: dockerfile-to-build
+                value: "{{inputs.parameters.dockerfile-to-build}}"
+              - name: dockerfile-context
+                value: "{{inputs.parameters.dockerfile-context}}"
+              - name: dockerfile-tag
+                value: "{{inputs.parameters.dockerfile-tag}}"
+              - name: project-shorthand
+                value: "{{inputs.parameters.project-shorthand}}"
+              artifacts:
+              - name: git-repo
+                from: "{{inputs.artifacts.git-repo}}"
+    - name: makisu-alpine
+      inputs:
+        parameters:
+        - name: dockerfile-to-build
+        - name: dockerfile-context
+        - name: dockerfile-tag
+        - name: redis-cache-address
+          value: "{{inputs.parameters.redis-cache-address}}"
+        artifacts:
+        - name: git-repo
+          path: "{{inputs.parameters.git-clone-artifact-path}}"
+      script:
+        image: gcr.io/uber-container-tools/makisu-alpine:v0.1.17
+        command: [sh]
+        workingDir: "{{inputs.artifacts.git-repo.path}}"
+        source: |
+          /makisu-internal/makisu build \
+            --registry-config=/registry-config/registries-bdata-ml.yaml \
+            --push=gcr.io \
+            --modifyfs=true \
+            --compression=no \
+            --redis-cache-addr={{inputs.parameters.redis-cache-address}} \
+            -t={{inputs.parameters.dockerfile-tag}} \
+            -f={{inputs.artifacts.git-repo.path}}/{{inputs.parameters.dockerfile-to-build}} \
+            {{inputs.parameters.dockerfile-context}}
+        volumeMounts:
+          - name: docker-registry-config
+            mountPath: /registry-config
+    - name: makisu
+      inputs:
+        parameters:
+        - name: dockerfile-to-build
+        - name: dockerfile-context
+        - name: dockerfile-tag
+        - name: redis-cache-address
+          value: "{{inputs.parameters.redis-cache-address}}"
+        artifacts:
+        - name: git-repo
+          path: "{{inputs.parameters.git-clone-artifact-path}}"
+      container:
+        image: gcr.io/uber-container-tools/makisu:latest
+        args: [
+          "build",
+          "--registry-config=/registry-config/registries-bdata-ml.yaml",
+          "--push=gcr.io",
+          "--modifyfs=true",
+          "--redis-cache-addr={{inputs.parameters.redis-cache-address}}",
+          "--compression=no",
+          "-t={{inputs.parameters.dockerfile-tag}}",
+          "-f={{inputs.artifacts.git-repo.path}}/{{inputs.parameters.dockerfile-to-build}}",
+          "{{inputs.parameters.dockerfile-context}}"
+        ]
+        workingDir: "{{inputs.artifacts.git-repo.path}}"
+        volumeMounts:
+          - name: docker-registry-config
+            mountPath: /registry-config
+    - name: kaniko
+      inputs:
+        parameters:
+        - name: dockerfile-to-build
+        - name: dockerfile-context
+        - name: dockerfile-tag
+        artifacts:
+        - name: git-repo
+          path: "{{inputs.parameters.git-clone-artifact-path}}"
+      container:
+        image: gcr.io/kaniko-project/executor:latest
+        args: [
+          "--cache=true",
+          "--destination={{inputs.parameters.dockerfile-tag}}",
+          "--dockerfile={{inputs.artifacts.git-repo.path}}/{{inputs.parameters.dockerfile-to-build}}",
+          "--context=dir://{{inputs.parameters.dockerfile-context}}"
+        ]
+        workingDir: "{{inputs.artifacts.git-repo.path}}"
+    - name: docker-in-docker
+      inputs:
+        parameters:
+        - name: dockerfile-to-build
+        - name: dockerfile-context
+        - name: dockerfile-tag
+        - name: project-shorthand
+        artifacts:
+        - name: git-repo
+          path: "{{inputs.parameters.git-clone-artifact-path}}"
+      script:
+        image: docker:19.03.8
+        imagePullPolicy: Always
+        command: [sh]
+        env:
+          - name: DOCKER_HOST
+            value: 127.0.0.1
+          - name: DOCKER_TLS
+            value: ""
+        workingDir: "{{inputs.artifacts.git-repo.path}}"
+        source: |
+          until docker ps; do
+            sleep 3
+          done
+          cat /var/secrets/google/npd/key.json | docker login -u _json_key --password-stdin https://gcr.io
+          docker build \
+            -t {{inputs.parameters.dockerfile-tag}} \
+            -f {{inputs.artifacts.git-repo.path}}/{{inputs.parameters.dockerfile-to-build}} \
+            {{inputs.parameters.dockerfile-context}}
+          cat /var/secrets/google/key.json | docker login -u _json_key --password-stdin https://gcr.io
+          docker push {{inputs.parameters.dockerfile-tag}}
+        volumeMounts:
+          - name: service-account
+            mountPath: /var/secrets/google
+          - name: service-account-npd
+            mountPath: /var/secrets/google/npd
+      sidecars:
+      - name: dind
+        image: docker:19.03.8-dind
+        securityContext:
+          privileged: true
+        mirrorVolumeMounts: true
+        env:
+        - name: DOCKER_TLS_CERTDIR
+          value: ""
+      volumes:
+      - name: service-account
+        secret:
+          secretName: "sa-{{inputs.parameters.project-shorthand}}-argo"
+      - name: service-account-npd
+        secret:
+          secretName: "sa-npd-argo"
