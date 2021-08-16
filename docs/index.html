@@ -747,7 +747,6 @@ spec:
           --data "{ 'token': '$SLACK_TOKEN', 'channel': '{{inputs.parameters.SLACK_CHANNEL}}', 'text' : 'Workflow {{inputs.parameters.WORKFLOW_NAME}} beginning:star:', 'attachments': [{'color': '#ADD8E6','blocks': [ { 'type': 'section', 'fields': [{ 'type': 'mrkdwn', 'text': '<https://workflows.$WORKFLOW_ENV.$CLOUD_REGION.$WORKFLOW_CLOUD.DOMAIN.$ENV_DOMAIN/workflows/argo-workflows/{{inputs.parameters.WORKFLOW_NAME}}?tab=workflow|Workflow beginning on $WORKFLOW_CLOUD $WORKFLOW_ENV>'}] } ] }]  }" \
           https://slack.com/api/chat.postMessage
 ---
-# A hello-world example of the workflow getting notifications added to it
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
