@@ -1,0 +1,121 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  annotations:
+    workflows.argoproj.io/description: >-
+      A template for sending slack notifications with workflow status details when the workflow begins and completes.
+    workflows.argoproj.io/maintainer: '@courtneygreif'
+    workflows.argoproj.io/tags: slack-workflow-notifications
+    workflows.argoproj.io/version: '>= 2.9.0'
+  name: send-slack
+spec:
+  templates:
+    - name: send-completion
+      inputs:
+        parameters:
+          - name: WORKFLOW_NAME
+          - name: WORKFLOW_STATUS
+          - name: SLACK_CHANNEL
+      script:
+        imagePullPolicy: "Always"
+        image: curlimages/curl
+        env:
+          - name: WORKFLOW_ENV # Optional
+            value: "qa"
+          - name: WORKFLOW_CLOUD # Optional
+            value: "aws"
+          - name: CLOUD_REGION # Optional
+            value: "us-gov-west-1"
+          - name: ENV_DOMAIN # Optional
+            value: "com"
+          - name: SLACK_TOKEN
+            value: YOUR_SLACK_TOKEN
+        command: ["sh"]
+        # If any optional environment variables above were removed, remove them from the curl as well
+        source: |
+          if [[ {{inputs.parameters.WORKFLOW_STATUS}} == "Succeeded" ]]; then
+          EMOJI=":celebrate:"
+          COLOR="#00ff00"
+          else
+          EMOJI=":failed:"
+          COLOR="#ff0000"
+          fi
+          curl -vvv -X POST -H "Authorization: Bearer $SLACK_TOKEN" \
+          -H "Content-type: application/json" \
+          --data "{ 'token': '$SLACK_TOKEN', 'channel': '{{inputs.parameters.SLACK_CHANNEL}}', 'text' : 'Workflow {{inputs.parameters.WORKFLOW_STATUS}}', 'attachments': [{'color': '$COLOR','blocks': [ { 'type': 'section', 'fields': [{ 'type': 'mrkdwn', 'text': '<https://workflows.$WORKFLOW_ENV.$CLOUD_REGION.$WORKFLOW_CLOUD.DOMAIN.$ENV_DOMAIN/workflows/argo-workflows/{{inputs.parameters.WORKFLOW_NAME}}?tab=workflow|Workflow completed in $WORKFLOW_CLOUD $WORKFLOW_ENV>'}] }, { 'type': 'section', 'fields': [ { 'type': 'mrkdwn', 'text': '*Workflow Name:*\n{{inputs.parameters.WORKFLOW_NAME}}' }, { 'type': 'mrkdwn', 'text': '*Workflow Outcome:*\n{{inputs.parameters.WORKFLOW_STATUS}} $EMOJI' } ] } ] } ] }" \
+          https://slack.com/api/chat.postMessage
+    
+    - name: send-beginning
+      inputs:
+        parameters:
+          - name: WORKFLOW_NAME
+          - name: SLACK_CHANNEL
+      script:
+        imagePullPolicy: "Always"
+        image: curlimages/curl
+        env:
+          - name: WORKFLOW_ENV # Optional
+            value: "qa"
+          - name: WORKFLOW_CLOUD # Optional
+            value: "aws"
+          - name: CLOUD_REGION # Optional
+            value: "us-gov-west-1"
+          - name: ENV_DOMAIN # Optional
+            value: "com"
+          - name: SLACK_TOKEN
+            value: YOUR_SLACK_TOKEN
+        command: ["sh"]
+        # If any optional environment variables above were removed, remove them from the curl as well
+        source: |
+          curl -vvv -X POST -H "Authorization: Bearer $SLACK_TOKEN" \
+          -H "Content-type: application/json" \
+          --data "{ 'token': '$SLACK_TOKEN', 'channel': '{{inputs.parameters.SLACK_CHANNEL}}', 'text' : 'Workflow {{inputs.parameters.WORKFLOW_NAME}} beginning:star:', 'attachments': [{'color': '#ADD8E6','blocks': [ { 'type': 'section', 'fields': [{ 'type': 'mrkdwn', 'text': '<https://workflows.$WORKFLOW_ENV.$CLOUD_REGION.$WORKFLOW_CLOUD.DOMAIN.$ENV_DOMAIN/workflows/argo-workflows/{{inputs.parameters.WORKFLOW_NAME}}?tab=workflow|Workflow beginning on $WORKFLOW_CLOUD $WORKFLOW_ENV>'}] } ] }]  }" \
+          https://slack.com/api/chat.postMessage
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  annotations:
+    workflows.argoproj.io/description: >-
+      An example of how to add the notifications to your workflow.
+    workflows.argoproj.io/maintainer: '@courtneygreif'
+    workflows.argoproj.io/tags: slack-workflow-notifications
+    workflows.argoproj.io/version: '>= 2.9.0'
+  name: workflow-template-submittable
+spec:
+  onExit: exit-notification
+  entrypoint: whalesay-notifications
+  templates:
+    - name: whalesay-template
+      container:
+        image: hello-world
+
+    - name: exit-notification
+      steps:
+        - - name: exit-time
+            templateRef:
+              name: send-slack
+              template: send-completion
+            arguments:
+              parameters:
+                - name: WORKFLOW_STATUS
+                  value: "{{workflow.status}}"
+                - name: WORKFLOW_NAME
+                  value: "{{workflow.name}}"
+                - name: SLACK_CHANNEL
+                  value: "YOUR_SLACK_CHANNEL_ID"
+    # template to send a notificataion, complete workflow, and then send a completion notification
+    - name: whalesay-notifications
+      steps:
+        - - name: current-workflow
+            template: whalesay-template
+          - name: workflow-beginning
+            templateRef:
+              name: send-slack
+              template: send-beginning
+            arguments:
+              parameters:
+                - name: WORKFLOW_NAME
+                  value: "{{workflow.name}}"
+                - name: SLACK_CHANNEL
+                  value: "YOUR_SLACK_CHANNEL_ID"
