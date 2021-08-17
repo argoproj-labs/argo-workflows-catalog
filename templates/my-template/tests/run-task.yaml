@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: workflow-template-hello-world-
+spec:
+  entrypoint: run-test
+  templates:
+  - name: run-test
+    steps:
+      - - name: call-hello-world
+          templateRef:
+            name: hello-world
+            template: argosay
+      - - name: call-assert
+          template: assert
+          arguments:
+            parameters:
+            - name: test-output
+              value: "{{steps.call-hello-world.outputs.result}}"
+
+  - name: assert
+    inputs:
+      parameters:
+        - name: test-output
+    container:
+      image: alpine:latest
+      command: [sh, -c]
+      args:
+        - "[[ '{{inputs.parameters.test-output}}' == 'hello argo!' ]]"
+        

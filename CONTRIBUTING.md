@@ -17,7 +17,8 @@ cd ~/go/src/github.com/argoproj-labs/argo-workflows-catalog
 cp -R templates/hello-world templates/my-template
 ```
 
-Edit `templates/my-template/manifests.yaml` to add your template.
+Edit `templates/my-template/manifests.yaml` to add your template. Write a breif description of your contribution in the `metadata.annotations` section of your template.
+
 
 Run `make`:
 
