@@ -123,6 +123,82 @@ spec:
 </div>
 </div><div class="col-sm-3">
 <div class="shadow p-3 mb-5 bg-white rounded">
+    <h3><i class='fa fa-sitemap'></i> aws-sns-notifications</h3>
+    <p class="text-muted">By <a href="https://github.com/@masonkmeyer">@masonkmeyer</a> <span class="badge badge-light">>= 2.9.0</span></p>
+    <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Publish a messsage to an SNS topic.</p>
+	<p><span class="badge badge-secondary">aws</span><span class="badge badge-secondary">notification</span><span class="badge badge-secondary">sns</span></p>
+    <div><button type="button" class="btn btn-light" data-toggle="modal" data-target="#aws-sns-notificationsModal">Get <i class="fa fa-angle-right"></i></button></div>
+<div class="modal" id="aws-sns-notificationsModal" tabindex="-1" aria-labelledby="aws-sns-notificationsLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="aws-sns-notificationsLabel"><i class='fa fa-sitemap'></i> aws-sns-notifications</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">Publish a messsage to an SNS topic.</div>
+      <div class="modal-body"><pre><code>kubectl apply -f https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/templates/aws-sns-notifications/manifests.yaml</code></pre></div>
+      <div class="modal-body"><pre><code>apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  annotations:
+    workflows.argoproj.io/description: Publish a messsage to an SNS topic.
+    workflows.argoproj.io/maintainer: '@masonkmeyer'
+    workflows.argoproj.io/tags: aws,sns,notification
+    workflows.argoproj.io/version: '>= 2.9.0'
+  name: aws-sns-notification
+spec:
+  arguments:
+    parameters:
+    - name: topic_arn
+      valueFrom:
+        supplied: {} 
+    - name: message
+      valueFrom:
+        supplied: {}
+    - name: region 
+      valueFrom:
+        supplied: {}                
+  entrypoint: publish-sns
+  templates:
+    - name: publish-sns
+      inputs:
+        parameters:
+          - name: topic_arn
+          - name: message
+          - name: region
+      container:
+        imagePullPolicy: IfNotPresent
+        image: amazon/aws-cli:latest
+        env:
+          - name: AWS_REGION
+            value: "{{inputs.parameters.region}}"
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: mysecret
+                key: AWS_ACCESS_KEY_ID
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: mysecret
+                key: AWS_SECRET_ACCESS_KEY
+        command: ["aws"]
+        args:
+          - sns
+          - publish
+          - "--topic-arn"
+          - "{{inputs.parameters.topic_arn}}"
+          - "--message"
+          - "{{inputs.parameters.message}}"
+</code></pre></div>
+    </div>
+  </div>
+</div>
+</div>
+</div><div class="col-sm-3">
+<div class="shadow p-3 mb-5 bg-white rounded">
     <h3><i class='fa fa-sitemap'></i> buildkit</h3>
     <p class="text-muted">By <a href="https://github.com/@alexec">@alexec</a> <span class="badge badge-light">>= 2.9.0</span></p>
     <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Build and push an image using Docker Buildkit. This does not need privileged access, unlike Docker in Docker (DIND).</p>
