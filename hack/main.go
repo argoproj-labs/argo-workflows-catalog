@@ -58,15 +58,15 @@ func main() {
 			panic("invalid maintainer, must be Github username starting with \"@\": " + maintainer)
 		}
 		url := "https://raw.githubusercontent.com/argoproj-labs/argo-workflows-catalog/master/" + filename
-		cards = append(cards, `<div class="col-sm-3">
+		cards = append(cards, `<div class="col-sm-4">
 <div class="shadow p-3 mb-5 bg-white rounded">
-    <h3><i class='fa fa-sitemap'></i> `+name+`</h3>
-    <p class="text-muted">By <a href="https://github.com/`+strings.TrimSuffix(maintainer, "@")+`">`+maintainer+`</a> <span class="badge badge-light">`+version+`</span></p>
+    <h4><i class='fa fa-sitemap'></i> `+name+`</h4>
+    <p class="text-muted">By <a href="https://github.com/`+strings.TrimPrefix(maintainer, "@")+`">`+maintainer+`</a> <span class="badge badge-light">`+version+`</span></p>
     <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">`+description+`</p>
 	<p>`+formatTags(tags)+`</p>
     <div><button type="button" class="btn btn-light" data-toggle="modal" data-target="#`+name+`Modal">Get <i class="fa fa-angle-right"></i></button></div>
 <div class="modal" id="`+name+`Modal" tabindex="-1" aria-labelledby="`+name+`Label" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-scrollable">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="`+name+`Label"><i class='fa fa-sitemap'></i> `+name+`</h5>
@@ -166,7 +166,7 @@ func main() {
 func formatTags(tags []string) string {
 	html := ""
 	for _, tag := range tags {
-		html += `<span class="badge badge-secondary">` + tag + `</span>`
+		html += `<span class="badge badge-secondary m-1">` + tag + `</span>`
 	}
 	return html
 }
