@@ -31,7 +31,7 @@ spec:
       script:
         image: golang:1.14
         workingDir: /work
-        args:
+        command:
           - sh
         # use --depth 1 and --single-branch for fastest possible checkout
         source: git clone --depth 1 --single-branch --branch {{workflow.parameters.branch}} {{workflow.parameters.repo}} .
@@ -42,7 +42,7 @@ spec:
       script:
         image: golang:1.14
         workingDir: /work
-        args:
+        command:
           - sh
         source: go build -o {{workflow.parameters.output}} -v ./...
         volumeMounts:
@@ -52,7 +52,7 @@ spec:
       script:
         image: golang:1.14
         workingDir: /work
-        args:
+        command:
           - sh
         source: go test -v ./...
         volumeMounts:
