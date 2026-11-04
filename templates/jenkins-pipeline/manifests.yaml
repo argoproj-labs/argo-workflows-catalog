@@ -25,7 +25,7 @@ spec:
       - name: image
         value: jenkins/jenkinsfile-runner
       - name: build-number
-        value: 1
+        value: "1"
       - name: cause
         value: "argo-workflow"
       - name: job-name
