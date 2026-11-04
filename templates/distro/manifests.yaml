@@ -80,7 +80,7 @@ spec:
         args: [sleep 10]
     
     - name: run-test
-      metadata:
+      # metadata:
         # If you are using role base access for your namespace configure this
         # annotations:
         #   iam.amazonaws.com/role: "k8s-{{workflow.parameters.pfiNamespace}}"
@@ -153,7 +153,7 @@ spec:
           limits:
             memory: 2Gi
             cpu: "1"
-      metadata:
+      # metadata:
         # annotations:
         #   iam.amazonaws.com/role: "k8s-{{workflow.parameters.pfiNamespace}}"
       inputs:
