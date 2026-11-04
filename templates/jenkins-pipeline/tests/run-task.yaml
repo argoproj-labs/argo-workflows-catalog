@@ -13,28 +13,6 @@ spec:
           template: run-jenkins-pipeline
         arguments:
           artifacts:
-            - name: plugins
-              raw:
-                data: |
-                  credentials
-                  mailer
-                  display-url-api
-                  structs
-                  slack
-                  token-macro
-                  script-security
-                  jackson2-api
-                  junit
-                  plain-credentials
-                  workflow-step-api
-                  apache-httpcomponents-client-4-api
-                  echarts-api
-                  workflow-api
-                  scm-api
-                  jquery3-api
-                  plugin-util-api
-                  snakeyaml-api
-                  durable-task
             - name: jenkinsfile
               raw:
                 data: |
