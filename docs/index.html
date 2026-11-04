@@ -242,8 +242,8 @@ metadata:
 spec:
   serviceAccountName: argowf-svcacc
   entrypoint: perf-infra
-  poddisruptionbudget:
-    minavailable: 100%
+  podDisruptionBudget:
+    minAvailable: 100%
   # must complete in 1m
   activeDeadlineSeconds: 86400
   # keep workflows for 3m
@@ -255,13 +255,13 @@ spec:
   arguments:
     parameters:
       - name: limit
-        value: 1
+        value: "1"
       - name: peakTPS
-        value: 1
+        value: "1"
       - name: rampupTime
-        value: 1
+        value: "1"
       - name: steadyStateTime
-        value: 1
+        value: "1"
       - name: gitrepo
         value: "NA"
       - name: buildURL
@@ -269,7 +269,7 @@ spec:
       - name: envName
         value: "prf"
       - name: buildnum
-        value: 1
+        value: "1"
       - name: baseurl
         value: "https://XXX.amazonaws.com"
       - name: uniqueName
@@ -310,7 +310,7 @@ spec:
         args: [sleep 10]
     
     - name: run-test
-      metadata:
+      # metadata:
         # If you are using role base access for your namespace configure this
         # annotations:
         #   iam.amazonaws.com/role: "k8s-{{workflow.parameters.pfiNamespace}}"
@@ -383,7 +383,7 @@ spec:
           limits:
             memory: 2Gi
             cpu: "1"
-      metadata:
+      # metadata:
         # annotations:
         #   iam.amazonaws.com/role: "k8s-{{workflow.parameters.pfiNamespace}}"
       inputs:
@@ -525,8 +525,7 @@ spec:
             name: work
   volumeClaimTemplates:
     # A shared work volume.
-    - name: work
-      metadata:
+    - metadata:
         name: work
       spec:
         accessModes: [ "ReadWriteOnce" ]
@@ -629,7 +628,7 @@ spec:
       - name: image
         value: jenkins/jenkinsfile-runner
       - name: build-number
-        value: 1
+        value: "1"
       - name: cause
         value: "argo-workflow"
       - name: job-name
@@ -640,16 +639,24 @@ spec:
       source: |
         set -euox pipefail
 
-        ARGS=(--file="/pipeline/jenkinsfile")
-        ARGS+=(--build-number="{{inputs.parameters.build-number}}")
-        ARGS+=(--cause="{{inputs.parameters.cause}}")
-        ARGS+=(--job-name="{{inputs.parameters.job-name}}")
+        # The launcher passes --file (from JENKINSFILE_PATH) and --plugins
+        # (the image's bundled plugins directory) itself.
+        export JENKINSFILE_PATH=/pipeline/jenkinsfile
 
+        # Optional extra plugins, installed alongside the bundled ones. Pin
+        # versions compatible with the image's Jenkins version.
         if [[ -f /pipeline/plugins.txt ]]; then
-          ARGS+=(--plugins="/pipeline/plugins.txt")
+          jenkins_version=$(sed -n 's/^Jenkins-Version: *//p' /app/jenkins/META-INF/MANIFEST.MF | tr -d '\r')
+          java -jar /app/bin/jenkins-plugin-manager.jar \
+            --jenkins-version "$jenkins_version" \
+            --plugin-file /pipeline/plugins.txt \
+            --plugin-download-directory /usr/share/jenkins/ref/plugins
         fi
 
-        /app/bin/jenkinsfile-runner-launcher "${ARGS[@]}"
+        /app/bin/jenkinsfile-runner-launcher \
+          --build-number="{{inputs.parameters.build-number}}" \
+          --cause="{{inputs.parameters.cause}}" \
+          --job-name="{{inputs.parameters.job-name}}"
 </code></pre></div>
     </div>
   </div>

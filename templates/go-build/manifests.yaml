@@ -60,8 +60,7 @@ spec:
             name: work
   volumeClaimTemplates:
     # A shared work volume.
-    - name: work
-      metadata:
+    - metadata:
         name: work
       spec:
         accessModes: [ "ReadWriteOnce" ]

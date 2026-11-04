@@ -12,8 +12,8 @@ metadata:
 spec:
   serviceAccountName: argowf-svcacc
   entrypoint: perf-infra
-  poddisruptionbudget:
-    minavailable: 100%
+  podDisruptionBudget:
+    minAvailable: 100%
   # must complete in 1m
   activeDeadlineSeconds: 86400
   # keep workflows for 3m
@@ -25,13 +25,13 @@ spec:
   arguments:
     parameters:
       - name: limit
-        value: 1
+        value: "1"
       - name: peakTPS
-        value: 1
+        value: "1"
       - name: rampupTime
-        value: 1
+        value: "1"
       - name: steadyStateTime
-        value: 1
+        value: "1"
       - name: gitrepo
         value: "NA"
       - name: buildURL
@@ -39,7 +39,7 @@ spec:
       - name: envName
         value: "prf"
       - name: buildnum
-        value: 1
+        value: "1"
       - name: baseurl
         value: "https://XXX.amazonaws.com"
       - name: uniqueName
@@ -80,7 +80,7 @@ spec:
         args: [sleep 10]
     
     - name: run-test
-      metadata:
+      # metadata:
         # If you are using role base access for your namespace configure this
         # annotations:
         #   iam.amazonaws.com/role: "k8s-{{workflow.parameters.pfiNamespace}}"
@@ -153,7 +153,7 @@ spec:
           limits:
             memory: 2Gi
             cpu: "1"
-      metadata:
+      # metadata:
         # annotations:
         #   iam.amazonaws.com/role: "k8s-{{workflow.parameters.pfiNamespace}}"
       inputs:
